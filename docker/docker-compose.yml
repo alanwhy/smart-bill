@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  smart-bill:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: smart-bill-app
+    ports:
+      - "8000:8000"
+    environment:
+      - QWEN_API_KEY=${QWEN_API_KEY}
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=sqlite:///./data/smart_bill.db
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      # 数据卷，用于持久化数据库和上传的图片
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+# 网络配置
+networks:
+  default:
+    name: smart-bill-network
+    driver: bridge
