@@ -1,7 +1,7 @@
 """Pydantic 数据模型和类型定义"""
 
 from datetime import datetime
-from typing import List
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -32,7 +32,7 @@ class BillResponse(BaseModel):
 
     code: int = Field(..., description="响应码")
     msg: str = Field(..., description="响应消息")
-    data: any = Field(default=None, description="响应数据")
+    data: Any = Field(default=None, description="响应数据")
 
 
 class ErrorResponse(BaseModel):
@@ -40,7 +40,7 @@ class ErrorResponse(BaseModel):
 
     code: int = Field(..., description="错误码")
     msg: str = Field(..., description="错误消息")
-    detail: str = Field(default=None, description="错误详情")
+    detail: Optional[str] = Field(default=None, description="错误详情")
 
 
 class BillRecordInDB(BaseModel):
@@ -52,7 +52,7 @@ class BillRecordInDB(BaseModel):
     merchant_name: str = Field(..., description="商户名称")
     transaction_date: str = Field(..., description="交易日期")
     category: str = Field(..., description="分类")
-    image_path: str = Field(default=None, description="图片路径")
+    image_path: Optional[str] = Field(default=None, description="图片路径")
     created_at: datetime = Field(..., description="创建时间")
     updated_at: datetime = Field(..., description="更新时间")
 
@@ -72,10 +72,10 @@ class UploadRequest(BaseModel):
 class UpdateBillRequest(BaseModel):
     """修改账单请求模型"""
 
-    value: float = Field(default=None, description="消费金额", gt=0)
-    merchant_name: str = Field(default=None, description="商户名称", min_length=1)
-    transaction_date: str = Field(default=None, description="交易日期")
-    category: str = Field(default=None, description="分类")
+    value: Optional[float] = Field(default=None, description="消费金额", gt=0)
+    merchant_name: Optional[str] = Field(default=None, description="商户名称", min_length=1)
+    transaction_date: Optional[str] = Field(default=None, description="交易日期")
+    category: Optional[str] = Field(default=None, description="分类")
 
     class Config:
         json_schema_extra = {

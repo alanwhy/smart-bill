@@ -1,9 +1,11 @@
 """应用配置"""
 
-import os
 from typing import List
 
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
+
+load_dotenv()
 
 
 class Settings(BaseSettings):
@@ -14,17 +16,17 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
 
     # 服务配置
-    host: str = os.getenv("HOST", "0.0.0.0")
-    port: int = int(os.getenv("PORT", "8000"))
+    host: str = "0.0.0.0"
+    port: int = 8000
 
     # 数据库配置
-    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./smart_bill.db")
+    database_url: str = "sqlite:///./smart_bill.db"
 
     # Qwen API 配置
-    qwen_api_key: str = os.getenv("QWEN_API_KEY", "")
+    qwen_api_key: str = ""
 
     # 日志配置
-    log_level: str = os.getenv("LOG_LEVEL", "INFO")
+    log_level: str = "INFO"
 
     # CORS 配置
     cors_origins: List[str] = [

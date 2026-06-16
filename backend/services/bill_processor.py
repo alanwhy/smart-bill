@@ -19,8 +19,14 @@ class BillProcessor:
 
     def __init__(self):
         """初始化处理器"""
-        self.qwen_service = get_qwen_service()
+        self.qwen_service = None
         self.bill_parser = BillParser()
+
+    def _get_qwen_service(self):
+        """延迟加载 Qwen 服务"""
+        if self.qwen_service is None:
+            self.qwen_service = get_qwen_service()
+        return self.qwen_service
 
     def process_bill_image(self, file_path: str, user_id: int, db: Session) -> List[BillItem]:
         """处理单个账单图片的完整流程
@@ -50,7 +56,7 @@ class BillProcessor:
             shutil.copy2(file_path, temp_file_path)
 
             # Step 3: 调用 Qwen 识别
-            qwen_response = self.qwen_service.call_qwen_vision(temp_file_path)
+            qwen_response = self._get_qwen_service().call_qwen_vision(temp_file_path)
 
             # Step 4: 解析响应
             bill_items = self.bill_parser.parse_qwen_output(qwen_response)
