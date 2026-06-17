@@ -1,5 +1,54 @@
 # 更新日志
 
+## [0.2.0] - 2026-06-17
+
+### 已实现
+
+- [x] Phase 12：用户认证与授权
+  - JWT token 登录认证（python-jose + passlib/bcrypt）
+  - `POST /api/v1/auth/login` - 用户登录，返回 JWT token
+  - `GET /api/v1/auth/me` - 获取当前登录用户信息（Bearer token）
+  - `POST /api/v1/auth/change-password` - 修改密码
+  - Auth service（`backend/services/auth_service.py`）
+  - 前端登录页面（`LoginPage.vue`）和认证状态管理（Pinia auth store）
+  - 受保护路由（需登录后访问）
+
+- [x] Phase 13：分类管理服务
+  - Category 数据库表（`backend/database/models.py`）
+  - `POST /api/v1/categories` - 创建自定义分类
+  - `GET /api/v1/categories` - 列出所有分类
+  - `GET /api/v1/categories/{id}` - 查询单个分类
+  - `PUT /api/v1/categories/{id}` - 更新分类
+  - `DELETE /api/v1/categories/{id}` - 删除分类（含安全检查）
+  - 分类种子数据（`backend/database/seed.py`）
+  - 前端分类管理页面（`CategoriesPage.vue`）和 Pinia categories store
+
+- [x] Phase 14：Vue 3 前端应用
+  - Vue 3 + TypeScript + Vite + Tailwind CSS + Pinia 完整技术栈
+  - 响应式设计：PC 侧边栏导航、移动端底部导航
+  - 账单上传界面（`BillUploadModal.vue`）
+  - 账单列表与筛选（`DashboardPage.vue`、`BillFilters.vue`）
+  - 账单编辑/删除（`BillEditModal.vue`、`BillCard.vue`）
+  - 分类管理界面（`CategoriesPage.vue`）
+  - 用户设置页面（`SettingsPage.vue`、`UserPage.vue`）
+  - Vite 代理配置（前端 http://localhost:5173 → 后端 http://localhost:8000）
+
+- [x] Phase 15（部分）：前端增强与账单备注
+  - Toast 通知组件（`components/common/Toast.vue`）- error/success/info 三种类型，自动消失
+  - ConfirmDialog 确认对话框组件
+  - 账单备注（notes）字段 - 数据库、API、前端全链路支持
+  - 删除操作错误提示中文化（"分类「x」下还有账单，请先修改..."）
+
+- [x] 其他改进
+  - `scripts/restart.sh` - 一键重启前后端开发服务器脚本
+  - 优化 Qwen API 响应日志记录，方便调试
+  - 前端 README（`frontend/web/README.md`）- 技术栈、设计系统、开发规范
+
+### 已知问题
+- 无
+
+---
+
 ## [0.1.0] - 2026-06-16
 
 ### 已实现
@@ -55,10 +104,9 @@
 - [ ] 集成测试编写
 
 ### 待实现
-- [ ] 用户认证与授权
-- [ ] 分类管理服务
-- [ ] 前端应用开发
-- [ ] Docker 部署配置
+- [ ] 账单统计分析与报表导出
+- [ ] Docker NAS 部署优化
+- [ ] 消费趋势分析
 
 ### 已知问题
 - 无

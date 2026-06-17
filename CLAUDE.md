@@ -22,14 +22,14 @@
    - Utils 层 (`backend/utils/`) - 工具函数
 
 2. **前后端分离**
-   - 后端: Python + FastAPI
-   - 前端: 预留在 `frontend/web/`（兼容 PC/移动）
-   - 通过 REST API 通信
+   - 后端: Python + FastAPI（http://localhost:8000）
+   - 前端: Vue 3 + TypeScript + Vite + Tailwind CSS + Pinia（http://localhost:5173）
+   - 通过 REST API 通信，Vite 代理处理跨域
 
 3. **数据库设计**
    - SQLite 轻量级存储（本地 NAS 部署）
-   - 单表 `bill_records`，存储账单数据
-   - 字段: id、user_id、merchant_name、value、transaction_date、category、image_path、created_at、updated_at
+   - `bill_records` 表：id、user_id、merchant_name、value、transaction_date、category、notes、image_path、created_at、updated_at
+   - `categories` 表：id、name、icon、color、sort_order、created_at
    - 索引: (user_id, created_at) 复合索引
 
 ### 关键技术决策
@@ -38,6 +38,10 @@
 - **SQLAlchemy + SQLite** - 轻量级 ORM + 数据库
 - **Pydantic** - 数据验证和序列化
 - **uv** - Python 依赖管理（替代 pip）
+- **Vue 3 + Vite** - 前端框架，TypeScript 支持，Vite proxy 处理跨域
+- **Pinia** - Vue 3 状态管理（auth/bills/categories/ui store）
+- **Tailwind CSS** - 响应式样式，深色主题，金色 primary (#F59E0B)
+- **python-jose + passlib** - JWT 认证
 - **Docker Compose** - 容器化部署
 
 ## 开发规范
@@ -89,15 +93,24 @@ logger.error(f"Error: {str(e)}")
 
 ```bash
 # 依赖管理
-make install          # 使用 uv 安装依赖
+make install          # 使用 uv 安装后端依赖
 uv pip list          # 列出所有依赖
 
-# 开发
-make dev             # 启动开发服务器 (http://localhost:8000)
+# 后端开发
+make dev             # 启动后端开发服务器 (http://localhost:8000)
 make test            # 运行测试
 make lint            # 代码检查
 make format          # 代码格式化
 make clean           # 清理临时文件
+
+# 前端开发
+cd frontend/web
+npm install          # 安装前端依赖
+npm run dev          # 启动前端开发服务器 (http://localhost:5173)
+npm run build        # 构建前端
+
+# 一键重启
+bash scripts/restart.sh   # 同时重启前后端开发服务器
 
 # Docker
 make build-docker    # 构建 Docker 镜像
@@ -112,6 +125,12 @@ make docs            # 查看文档
 
 ### 主要端点
 
+**认证**
+- `POST /api/v1/auth/login` - 登录获取 JWT token
+- `GET /api/v1/auth/me` - 获取当前用户（Bearer token）
+- `POST /api/v1/auth/change-password` - 修改密码
+
+**账单**
 - `POST /api/v1/bills/upload` - 上传图片识别账单
   - 参数: files (UploadFile), user_id (int)
   - 返回: List[BillItem]
@@ -120,10 +139,12 @@ make docs            # 查看文档
   - 参数: user_id, start_date?, end_date?, category?
   - 返回: List[BillRecordInDB]
 
-- `PUT /api/v1/bills/{bill_id}` - 修改账单
-  - 返回: BillRecordInDB
-
+- `PUT /api/v1/bills/{bill_id}` - 修改账单（支持 notes 备注字段）
 - `DELETE /api/v1/bills/{bill_id}` - 删除账单
+
+**分类**
+- `GET/POST /api/v1/categories` - 列出/创建分类
+- `GET/PUT/DELETE /api/v1/categories/{id}` - 查询/更新/删除分类
 
 - `GET /docs` - Swagger UI
 - `GET /health` - 健康检查
@@ -150,37 +171,49 @@ BillRecord(
   merchant_name: str,
   value: float,
   transaction_date: str,
-  category: str,              # 预定义分类
+  category: str,              # 分类名称（来自 categories 表）
+  notes: str | None,          # 账单备注
   image_path: str,            # 原始图片路径
   created_at: datetime,
   updated_at: datetime
 )
 ```
 
-### 分类枚举 (BillCategory)
-- DINING = "餐饮"
-- TRANSPORT = "交通"
-- SHOPPING = "购物"
-- ENTERTAINMENT = "娱乐"
-- HEALTHCARE = "医疗"
-- HOUSING = "住房"
-- OTHER = "其他"
+### Category (分类数据库)
+```python
+Category(
+  id: int,
+  name: str,                  # 分类名称
+  icon: str,                  # emoji 图标
+  color: str,                 # 颜色（hex）
+  sort_order: int,            # 排序
+  created_at: datetime
+)
+```
+
+### 默认分类（种子数据）
+- 餐饮 🍽️ / 交通 🚗 / 购物 🛍️ / 娱乐 🎮
+- 医疗 🏥 / 住房 🏠 / 其他 📦
 
 ## 文件组织
 
 ```
 backend/
 ├── api/
+│   ├── auth.py          # 认证路由（登录/获取用户/改密码）
 │   ├── bills.py         # 账单路由（主入口）
+│   ├── categories.py    # 分类路由（CRUD）
 │   └── routes.py        # 路由聚合
 ├── services/
+│   ├── auth_service.py  # 用户认证逻辑
 │   ├── qwen_vision.py  # Qwen API 调用
 │   ├── bill_parser.py  # 数据解析（JSON/文本）
 │   └── bill_processor.py # 流程编排
 ├── database/
-│   ├── models.py        # SQLAlchemy 模型
+│   ├── models.py        # SQLAlchemy 模型（BillRecord, Category）
 │   ├── db.py           # 数据库连接
-│   └── crud.py         # CRUD 操作
+│   ├── crud.py         # CRUD 操作
+│   └── seed.py         # 初始分类种子数据
 ├── core/
 │   ├── models.py        # Pydantic 模型
 │   ├── enums.py        # 分类枚举
@@ -189,6 +222,19 @@ backend/
     ├── validators.py   # 验证器
     ├── converters.py   # 数据转换
     └── logger.py       # 日志管理
+
+frontend/web/src/
+├── pages/              # DashboardPage, LoginPage, CategoriesPage...
+├── components/
+│   ├── bills/          # BillCard, BillEditModal, BillFilters, BillUploadModal
+│   └── common/         # Toast, ConfirmDialog
+├── stores/             # auth.ts, bills.ts, categories.ts, ui.ts
+├── api/                # axios 请求封装
+├── router/             # 路由（含受保护路由）
+└── types/              # TypeScript 类型定义
+
+scripts/
+└── restart.sh          # 一键重启前后端开发服务器
 ```
 
 ## 环境变量
@@ -200,7 +246,8 @@ LOG_LEVEL=INFO                         # 日志级别
 DATABASE_URL=sqlite:///./smart_bill.db # 数据库 URL
 HOST=0.0.0.0                          # 服务器地址
 PORT=8000                             # 服务器端口
-CORS_ORIGINS=["http://localhost:3000"] # CORS 允许源
+CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"] # CORS 允许源
+SECRET_KEY=your-secret-key            # JWT 签名密钥
 ```
 
 ## 开发流程
@@ -232,45 +279,45 @@ Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>
 
 ## 后续优先级
 
-### Phase 12: 用户认证与授权（第一优先级）
-- [ ] 简单用户注册/登录机制
-- [ ] JWT token 或 session 认证
-- [ ] `POST /api/v1/users/register`
-- [ ] `POST /api/v1/users/login`
-- [ ] 中间件验证 user_id
+### Phase 12: 用户认证与授权（已完成 ✅）
+- [x] JWT token 登录认证
+- [x] `POST /api/v1/auth/login`、`GET /api/v1/auth/me`
+- [x] auth service + 前端登录页
+- [ ] 中间件强制验证所有 bill 端点（当前 user_id 仍由前端传入）
+- [ ] 用户注册功能（当前仅支持预设账户）
 
-### Phase 13: 分类管理服务（第一优先级）
-- [ ] Category 数据库表
-- [ ] CRUD API 端点
-- [ ] 自定义分类支持
-- [ ] `GET/POST/PUT/DELETE /api/v1/categories`
+### Phase 13: 分类管理服务（已完成 ✅）
+- [x] Category 数据库表
+- [x] CRUD API 端点（`GET/POST/PUT/DELETE /api/v1/categories`）
+- [x] 自定义分类支持 + 种子数据
+- [x] 前端分类管理页面
 
-### Phase 14: 前端应用开发（第二优先级）
-- [ ] 响应式 Web 应用（兼容 PC/移动）
-- [ ] 图片上传界面
-- [ ] 账单列表展示
-- [ ] 分类管理界面
-- [ ] 日期范围筛选
+### Phase 14: 前端应用开发（已完成 ✅）
+- [x] 响应式 Web 应用（Vue 3 + TypeScript + Vite + Tailwind）
+- [x] 图片上传界面（BillUploadModal）
+- [x] 账单列表展示（DashboardPage + BillFilters）
+- [x] 分类管理界面（CategoriesPage）
+- [x] Toast 通知组件 + ConfirmDialog 确认框
+- [x] 账单备注字段
 
-### Phase 15: 高级功能（第三优先级）
-- [ ] 账单统计分析
+### Phase 15: 高级功能（第一优先级）
+- [ ] 账单统计分析（月度消费、分类占比）
 - [ ] 报表导出（PDF/Excel）
-- [ ] 消费趋势分析
+- [ ] 消费趋势图表（echarts/chart.js）
 - [ ] 定期提醒功能
 
-### Phase 16: 部署优化（第三优先级）
+### Phase 16: 部署优化（第二优先级）
 - [ ] NAS 部署指南
-- [ ] Docker 镜像优化
-- [ ] 本地存储配置
+- [ ] Docker 镜像优化（前端 nginx + 后端 uvicorn）
+- [ ] 本地存储配置（规范化图片存储路径）
 - [ ] 定时备份脚本
 
 ## 已知问题 & 限制
 
-1. **用户标识**: 当前 user_id 由前端传入，后续需要认证
-2. **分类固定**: 当前分类是硬编码的，后续需要动态管理
+1. **用户标识**: user_id 仍由前端传入，auth 中间件尚未强制校验所有账单端点
+2. **用户注册**: 当前仅支持预设账户登录，暂无注册功能
 3. **图片存储**: 临时文件存储在系统 temp 目录，后续需要规范化存储
 4. **并发**: SQLite 在高并发下可能出现锁定，小规模使用无问题
-5. **前端预留**: 尚未实现前端应用
 
 ## 持续维护
 
@@ -299,9 +346,16 @@ Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>
 cd smart-bill
 make install
 cp .env.example .env
-# 编辑 .env 填入 QWEN_API_KEY
+# 编辑 .env 填入 QWEN_API_KEY 和 SECRET_KEY
 make dev
-# 访问 http://localhost:8000/docs
+# 后端: http://localhost:8000/docs
+
+# 前端（另开终端）
+cd frontend/web && npm install && npm run dev
+# 前端: http://localhost:5173
+
+# 或者一键重启
+bash scripts/restart.sh
 ```
 
 ### 查看文档
@@ -356,5 +410,5 @@ git push origin main
 
 ---
 
-**最后更新**: 2026-06-16  
+**最后更新**: 2026-06-17  
 **由 Claude Code 维护**
