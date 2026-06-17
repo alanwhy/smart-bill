@@ -88,7 +88,7 @@
           :key="bill.id"
           :bill="bill"
           @edit="(b) => editBill(b)"
-          @delete="deleteBill"
+          @delete="(b) => deleteBill(b)"
         />
       </div>
     </div>
@@ -118,6 +118,13 @@
       @confirm="confirmDelete"
       @cancel="deletingBillId = null"
     />
+    <!-- 错误提示 -->
+    <Toast
+      v-if="toastMessage"
+      :message="toastMessage"
+      type="error"
+      @close="toastMessage = null"
+    />
   </div>
 </template>
 
@@ -132,6 +139,7 @@ import BillFilters from '@/components/bills/BillFilters.vue'
 import BillUploadModal from '@/components/bills/BillUploadModal.vue'
 import BillEditModal from '@/components/bills/BillEditModal.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import Toast from '@/components/common/Toast.vue'
 
 const billsStore = useBillsStore()
 const uiStore = useUiStore()
@@ -140,6 +148,7 @@ const authStore = useAuthStore()
 const showUploadModal = ref(false)
 const editingBill = ref<BillRecord | null>(null)
 const deletingBillId = ref<number | null>(null)
+const toastMessage = ref<string | null>(null)
 
 const isLoading = computed(() => billsStore.isLoading)
 const totalExpense = computed(() => billsStore.totalExpense)
@@ -171,8 +180,8 @@ const editBill = (bill: BillRecord) => {
   editingBill.value = bill
 }
 
-const deleteBill = (billId: number) => {
-  deletingBillId.value = billId
+const deleteBill = (bill: BillRecord) => {
+  deletingBillId.value = bill.id
 }
 
 const confirmDelete = async () => {
@@ -180,7 +189,7 @@ const confirmDelete = async () => {
   try {
     await billsStore.deleteBill(deletingBillId.value)
   } catch (e) {
-    alert(`删除失败: ${(e as Error).message}`)
+    toastMessage.value = `删除失败: ${(e as Error).message}`
   } finally {
     deletingBillId.value = null
   }

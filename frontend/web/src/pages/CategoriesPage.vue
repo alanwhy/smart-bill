@@ -10,11 +10,6 @@
         <button @click="openCreate" class="btn btn-primary">新建分类</button>
       </div>
 
-      <!-- 错误提示 -->
-      <div v-if="errorMessage" class="mb-4 p-3 bg-error/10 border border-error/30 rounded-lg">
-        <p class="text-sm text-error">{{ errorMessage }}</p>
-      </div>
-
       <!-- 列表 -->
       <div v-if="isLoading && categories.length === 0" class="space-y-3">
         <div v-for="i in 3" :key="i" class="card h-20 animate-pulse bg-surface/50" />
@@ -73,8 +68,7 @@
       </div>
     </div>
 
-    <!-- 编辑/新建模态 -->
-    <div v-if="modalOpen" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <!-- 编辑/新建模态 -->    <div v-if="modalOpen" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
       <div class="bg-surface rounded-2xl shadow-xl w-full max-w-md">
         <div class="border-b border-border px-6 py-4 flex items-center justify-between">
           <h2 class="text-xl font-bold text-text">{{ editingId ? '编辑分类' : '新建分类' }}</h2>
@@ -119,6 +113,24 @@
         </div>
       </div>
     </div>
+    <!-- 删除确认弹窗 -->
+    <ConfirmDialog
+      v-if="deletingCategory !== null"
+      title="删除分类"
+      :message="`确定删除分类「${deletingCategory?.name}」吗？此操作无法撤销。`"
+      confirm-label="删除"
+      :danger="true"
+      @confirm="confirmDelete"
+      @cancel="deletingCategory = null"
+    />
+
+    <!-- 错误提示 -->
+    <Toast
+      v-if="toastMessage"
+      :message="toastMessage"
+      type="error"
+      @close="toastMessage = null"
+    />
   </div>
 </template>
 
@@ -126,13 +138,16 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useCategoriesStore } from '@/stores/categories'
 import type { Category } from '@/types/bill'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import Toast from '@/components/common/Toast.vue'
 
 const categoriesStore = useCategoriesStore()
 
 const categories = computed(() => categoriesStore.sortedCategories)
 const isLoading = computed(() => categoriesStore.isLoading)
 
-const errorMessage = ref('')
+const toastMessage = ref<string | null>(null)
+const deletingCategory = ref<Category | null>(null)
 
 const modalOpen = ref(false)
 const editingId = ref<number | null>(null)
@@ -213,13 +228,18 @@ const handleSubmit = async () => {
   }
 }
 
-const handleDelete = async (cat: Category) => {
-  if (!confirm(`确定删除分类「${cat.name}」吗？`)) return
-  errorMessage.value = ''
+const handleDelete = (cat: Category) => {
+  deletingCategory.value = cat
+}
+
+const confirmDelete = async () => {
+  if (!deletingCategory.value) return
   try {
-    await categoriesStore.removeCategory(cat.id)
+    await categoriesStore.removeCategory(deletingCategory.value.id)
   } catch (e) {
-    errorMessage.value = (e as Error).message
+    toastMessage.value = (e as Error).message
+  } finally {
+    deletingCategory.value = null
   }
 }
 </script>

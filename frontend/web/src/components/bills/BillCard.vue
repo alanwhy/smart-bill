@@ -33,7 +33,7 @@
             </svg>
           </button>
           <button
-            @click.stop="$emit('delete')"
+            @click.stop="$emit('delete', bill)"
             class="p-2 hover:bg-error/10 rounded-lg transition-colors duration-200"
             title="删除"
           >
@@ -58,7 +58,7 @@ defineProps<{
 
 defineEmits<{
   edit: [bill: BillRecord]
-  delete: []
+  delete: [bill: BillRecord]
 }>()
 
 const formatDate = (dateStr: string): string => {

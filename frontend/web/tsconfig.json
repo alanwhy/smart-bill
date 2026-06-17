@@ -14,7 +14,7 @@
     "jsx": "preserve",
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "types": ["vite/client"],
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
