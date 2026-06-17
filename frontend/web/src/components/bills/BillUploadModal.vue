@@ -118,6 +118,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
+import { useAuthStore } from '@/stores/auth'
 
 const emit = defineEmits<{
   close: []
@@ -125,6 +126,7 @@ const emit = defineEmits<{
 }>()
 
 const billsStore = useBillsStore()
+const authStore = useAuthStore()
 
 const fileInput = ref<HTMLInputElement>()
 const selectedFiles = ref<File[]>([])
@@ -194,12 +196,17 @@ const handleUpload = async () => {
   errorMessage.value = ''
 
   try {
-    const userId = parseInt(localStorage.getItem('userId') || '1')
+    const userId = authStore.userId
+    if (!userId) {
+      errorMessage.value = '未登录'
+      isUploading.value = false
+      return
+    }
 
     // 模拟进度更新
     const progressInterval = setInterval(() => {
       if (uploadProgress.value < 90) {
-        uploadProgress.value += Math.random() * 30
+        uploadProgress.value = Math.min(90, uploadProgress.value + Math.random() * 30)
       }
     }, 300)
 

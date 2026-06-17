@@ -17,6 +17,21 @@ from sqlalchemy.orm import declarative_base, relationship
 Base = declarative_base()
 
 
+class User(Base):
+    """用户表"""
+
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True, comment="用户 ID")
+    username = Column(String(50), nullable=False, unique=True, index=True, comment="用户名")
+    hashed_password = Column(String(255), nullable=False, comment="哈希密码")
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment="创建时间")
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False, comment="更新时间")
+
+    def __repr__(self):
+        return f"<User(id={self.id}, username={self.username})>"
+
+
 class Category(Base):
     """账单分类表（全局共享，两位用户共用）"""
 

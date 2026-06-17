@@ -56,6 +56,7 @@ def init_db():
         from backend.database.seed import (
             backfill_legacy_bill_categories,
             seed_default_categories,
+            seed_default_users,
         )
 
         Base.metadata.create_all(bind=engine)
@@ -75,6 +76,7 @@ def init_db():
         db = SessionLocal()
         try:
             seed_default_categories(db)
+            seed_default_users(db)
             backfill_legacy_bill_categories(engine, db)
         finally:
             db.close()

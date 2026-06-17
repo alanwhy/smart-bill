@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from backend.database.models import Category
+from backend.database.models import Category, User
 from backend.utils import logger
 
 # (name, icon, color, sort_order)
@@ -30,6 +30,23 @@ def seed_default_categories(db: Session) -> None:
         db.add(Category(name=name, icon=icon, color=color, sort_order=sort_order))
     db.commit()
     logger.info(f"Seeded {len(DEFAULT_CATEGORIES)} default categories")
+
+
+def seed_default_users(db: Session) -> None:
+    """如果用户表为空，则插入内置用户。"""
+    if db.query(User).count() > 0:
+        return
+
+    from backend.services.auth_service import hash_password
+
+    default_users = [
+        ("wuhaoyuan", "123456"),
+        ("chenqingling", "123456"),
+    ]
+    for username, password in default_users:
+        db.add(User(username=username, hashed_password=hash_password(password)))
+    db.commit()
+    logger.info(f"Seeded {len(default_users)} default users")
 
 
 def backfill_legacy_bill_categories(engine: Engine, db: Session) -> None:

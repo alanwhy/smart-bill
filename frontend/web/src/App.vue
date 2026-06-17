@@ -1,7 +1,10 @@
 <template>
   <div class="flex h-screen bg-background text-text">
-    <!-- Sidebar - 桌面版 -->
-    <aside class="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:flex lg:flex-col lg:bg-surface lg:border-r lg:border-border">
+    <!-- Sidebar - 桌面版（仅登录后显示） -->
+    <aside
+      v-if="authStore.isAuthenticated"
+      class="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:flex lg:flex-col lg:bg-surface lg:border-r lg:border-border"
+    >
       <div class="p-6 border-b border-border">
         <h1 class="text-2xl font-bold text-primary">Smart Bill</h1>
       </div>
@@ -38,15 +41,48 @@
           <span>设置</span>
         </router-link>
       </nav>
+      <!-- 底部用户信息（点击跳转用户中心） -->
+      <router-link
+        to="/user"
+        class="p-4 border-t border-border flex items-center gap-3 cursor-pointer transition-colors duration-200"
+        :class="$route.path === '/user' ? 'bg-border/50' : 'hover:bg-border/40'"
+        aria-label="进入用户中心"
+      >
+        <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <svg class="w-4.5 h-4.5 w-[18px] h-[18px] text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-text truncate">{{ authStore.username }}</p>
+          <p class="text-xs text-text-muted">用户中心</p>
+        </div>
+        <svg class="w-4 h-4 text-text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </router-link>
     </aside>
 
     <!-- 主容器 -->
-    <div class="flex flex-col flex-1 lg:ml-64">
-      <!-- Header -->
-      <header class="sticky top-0 z-40 border-b border-border bg-surface/80 backdrop-blur-md lg:hidden">
-        <div class="flex items-center h-16 px-4 sm:px-6">
-          <!-- Logo - 移动版 -->
+    <div class="flex flex-col flex-1" :class="{ 'lg:ml-64': authStore.isAuthenticated }">
+      <!-- Header（移动端，仅登录后显示） -->
+      <header
+        v-if="authStore.isAuthenticated"
+        class="sticky top-0 z-40 border-b border-border bg-surface/80 backdrop-blur-md lg:hidden"
+      >
+        <div class="flex items-center justify-between h-16 px-4 sm:px-6">
           <h1 class="text-xl font-bold text-primary">Smart Bill</h1>
+          <router-link
+            to="/user"
+            class="flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 hover:bg-primary/20 cursor-pointer transition-colors duration-200"
+            aria-label="进入用户中心"
+          >
+            <svg class="w-[18px] h-[18px] text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </router-link>
         </div>
       </header>
 
@@ -56,8 +92,11 @@
       </main>
     </div>
 
-    <!-- 移动底部导航 -->
-    <nav class="fixed bottom-0 left-0 right-0 lg:hidden bg-surface border-t border-border">
+    <!-- 移动底部导航（仅登录后显示） -->
+    <nav
+      v-if="authStore.isAuthenticated"
+      class="fixed bottom-0 left-0 right-0 lg:hidden bg-surface border-t border-border"
+    >
       <div class="flex items-center justify-around h-16">
         <router-link
           to="/"
@@ -80,6 +119,17 @@
           <span class="text-xs">分类</span>
         </router-link>
         <router-link
+          to="/user"
+          class="flex flex-col items-center justify-center gap-1 flex-1 h-full"
+          :class="$route.path === '/user' ? 'text-primary' : 'text-text-muted'"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          <span class="text-xs">用户</span>
+        </router-link>
+        <router-link
           to="/settings"
           class="flex flex-col items-center justify-center gap-1 flex-1 h-full"
           :class="$route.path === '/settings' ? 'text-primary' : 'text-text-muted'"
@@ -94,19 +144,31 @@
     </nav>
 
     <!-- 移动端底部 nav 占位符 -->
-    <div class="h-16 lg:hidden" />
+    <div v-if="authStore.isAuthenticated" class="h-16 lg:hidden" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import { useCategoriesStore } from '@/stores/categories'
+import { useAuthStore } from '@/stores/auth'
 
+const authStore = useAuthStore()
 const categoriesStore = useCategoriesStore()
 
 onMounted(() => {
-  categoriesStore.getOrFetch()
+  if (authStore.isAuthenticated) {
+    categoriesStore.getOrFetch()
+  }
 })
+
+// 登录后再加载分类
+watch(
+  () => authStore.isAuthenticated,
+  (val) => {
+    if (val) categoriesStore.getOrFetch()
+  },
+)
 </script>
 
 <style scoped>

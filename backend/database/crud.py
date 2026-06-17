@@ -7,7 +7,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend.core.exceptions import DatabaseError, ResourceNotFoundError, ValidationError
-from backend.database.models import BillRecord, Category
+from backend.database.models import BillRecord, Category, User
 
 
 # ---------------------------------------------------------------------------
@@ -272,3 +272,55 @@ def delete_bill(db: Session, bill_id: int) -> bool:
     except Exception as e:
         db.rollback()
         raise DatabaseError(f"Failed to delete bill: {str(e)}")
+
+
+# ---------------------------------------------------------------------------
+# User CRUD
+# ---------------------------------------------------------------------------
+
+
+def get_user_by_username(db: Session, username: str) -> Optional[User]:
+    """根据用户名查找用户"""
+    try:
+        return db.query(User).filter(User.username == username).first()
+    except Exception as e:
+        raise DatabaseError(f"Failed to query user: {str(e)}")
+
+
+def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
+    """根据 ID 查找用户"""
+    try:
+        return db.query(User).filter(User.id == user_id).first()
+    except Exception as e:
+        raise DatabaseError(f"Failed to query user: {str(e)}")
+
+
+def create_user(db: Session, username: str, hashed_password: str) -> User:
+    """创建用户"""
+    try:
+        user = User(username=username, hashed_password=hashed_password)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
+    except Exception as e:
+        db.rollback()
+        raise DatabaseError(f"Failed to create user: {str(e)}")
+
+
+def update_password(db: Session, user_id: int, new_hashed_password: str) -> User:
+    """更新用户密码"""
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise ResourceNotFoundError("User", user_id)
+        user.hashed_password = new_hashed_password
+        user.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(user)
+        return user
+    except ResourceNotFoundError:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise DatabaseError(f"Failed to update password: {str(e)}")

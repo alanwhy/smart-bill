@@ -7,32 +7,6 @@
         <p class="text-text-muted">管理您的应用设置</p>
       </div>
 
-      <!-- 用户信息 -->
-      <div class="card p-6 mb-6">
-        <h2 class="text-lg font-semibold text-text mb-4">用户信息</h2>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm text-text-secondary mb-2">用户 ID</label>
-            <div class="flex gap-2">
-              <input
-                v-model="userId"
-                type="number"
-                min="1"
-                class="input flex-1"
-              />
-              <button
-                @click="saveUserId"
-                :disabled="isSaving"
-                class="btn btn-primary"
-              >
-                {{ isSaving ? '保存中...' : '保存' }}
-              </button>
-            </div>
-            <p class="text-xs text-text-muted mt-2">当前已保存的 ID: {{ savedUserId }}</p>
-          </div>
-        </div>
-      </div>
-
       <!-- 账单分类 -->
       <div class="card p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
@@ -76,36 +50,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useCategoriesStore } from '@/stores/categories'
-
-const userId = ref<number>(1)
-const isSaving = ref(false)
 
 const categoriesStore = useCategoriesStore()
 const categories = computed(() => categoriesStore.sortedCategories)
 
-const savedUserId = computed(() => {
-  return localStorage.getItem('userId') || '1'
-})
-
 onMounted(() => {
-  const stored = localStorage.getItem('userId')
-  if (stored) {
-    userId.value = parseInt(stored)
-  }
   categoriesStore.getOrFetch()
 })
-
-const saveUserId = async () => {
-  isSaving.value = true
-  try {
-    localStorage.setItem('userId', String(userId.value))
-    alert('用户 ID 已保存')
-  } catch (e) {
-    alert(`保存失败: ${(e as Error).message}`)
-  } finally {
-    isSaving.value = false
-  }
-}
 </script>

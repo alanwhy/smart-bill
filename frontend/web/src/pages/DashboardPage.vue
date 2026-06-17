@@ -125,6 +125,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useUiStore } from '@/stores/ui'
+import { useAuthStore } from '@/stores/auth'
 import type { BillRecord } from '@/types/bill'
 import BillCard from '@/components/bills/BillCard.vue'
 import BillFilters from '@/components/bills/BillFilters.vue'
@@ -134,6 +135,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
 const billsStore = useBillsStore()
 const uiStore = useUiStore()
+const authStore = useAuthStore()
 
 const showUploadModal = ref(false)
 const editingBill = ref<BillRecord | null>(null)
@@ -146,15 +148,14 @@ const isFilterSheetOpen = computed(() => uiStore.isFilterSheetOpen)
 
 // 生命周期
 onMounted(async () => {
-  // 使用本地存储的 userId 或默认值
-  const userId = parseInt(localStorage.getItem('userId') || '1')
-  await billsStore.fetchBills(userId)
+  if (!authStore.userId) return
+  await billsStore.fetchBills(authStore.userId)
 })
 
 // 方法
 const applyFilters = async () => {
-  const userId = parseInt(localStorage.getItem('userId') || '1')
-  await billsStore.fetchBills(userId, uiStore.filters)
+  if (!authStore.userId) return
+  await billsStore.fetchBills(authStore.userId, uiStore.filters)
   uiStore.closeFilterSheet()
 }
 

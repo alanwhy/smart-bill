@@ -165,3 +165,32 @@ class UpdateBillRequest(BaseModel):
                 "category_id": 1,
             }
         }
+
+
+class LoginRequest(BaseModel):
+    """登录请求"""
+
+    username: str = Field(..., description="用户名", min_length=1, max_length=50)
+    password: str = Field(..., description="密码", min_length=1)
+
+
+class LoginResponse(BaseModel):
+    """登录响应"""
+
+    token: str = Field(..., description="JWT token")
+    user_id: int = Field(..., description="用户 ID")
+    username: str = Field(..., description="用户名")
+
+
+class UserInfo(BaseModel):
+    """用户信息"""
+
+    user_id: int = Field(..., description="用户 ID")
+    username: str = Field(..., description="用户名")
+
+
+class ChangePasswordRequest(BaseModel):
+    """修改密码请求"""
+
+    old_password: str = Field(..., description="旧密码", min_length=1)
+    new_password: str = Field(..., description="新密码", min_length=6)
