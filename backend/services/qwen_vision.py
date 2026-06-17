@@ -8,32 +8,30 @@ import dashscope
 from dashscope import MultiModalConversation
 
 from backend.core.exceptions import FileError, QwenAPIError, ValidationError
+from backend.utils import qwen_logger as _log
 
 
 class QwenVisionService:
     """Qwen3-VL-Plus 服务封装"""
 
     # 精细化提示词
-    SYSTEM_PROMPT = """你是一个专业的账单/收据识别专家。
-请分析这张账单/收据图片，提取其中的所有消费项目信息。
+    SYSTEM_PROMPT = """你是一个专业的账单/收据识别专家。你的任务是从图片中提取账单信息并以 JSON 格式返回。
 
-返回格式必须是有效的 JSON，包含以下结构：
-{
-  "items": [
-    {
-      "merchant_name": "商户名称",
-      "amount": 金额数字（仅数字，不含符号），
-      "date": "YYYY-MM-DD HH:MM:SS 格式的日期（如果没有时间则使用 00:00:00）",
-      "category": "分类（从以下选项中选择：餐饮、交通、购物、娱乐、医疗、住房、其他）"
-    }
-  ]
-}
+【输出规则】
+- 必须且只能返回一个 JSON 对象，不得包含任何其他文字、解释、markdown 代码块
+- 即使图片不清晰或不是标准账单，也必须尝试提取，实在无法识别时返回 {"items": []}
 
-重要说明：
-1. 如果图片中有多个消费项目，请全部提取
-2. 日期格式必须是 YYYY-MM-DD HH:MM:SS
-3. 金额必须是数字格式
-4. 只返回 JSON，不要添加其他文字"""
+【JSON 结构】
+{"items": [{"merchant_name": "商户名", "amount": 金额数字, "date": "YYYY-MM-DD HH:MM:SS", "category": "分类"}]}
+
+【字段说明】
+- merchant_name: 商户/店铺名称，字符串
+- amount: 消费金额，纯数字（不含¥符号），必须大于0
+- date: 交易日期，格式 YYYY-MM-DD HH:MM:SS，无时间信息则用 00:00:00，无日期则用今天
+- category: 从以下选项中选择一个：餐饮、交通、购物、娱乐、医疗、住房、其他
+
+【示例输出】
+{"items": [{"merchant_name": "麦当劳", "amount": 35.5, "date": "2026-06-17 12:30:00", "category": "餐饮"}]}"""
 
     SUPPORTED_FORMATS = {"image/jpeg", "image/png"}
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
@@ -83,7 +81,7 @@ class QwenVisionService:
 
             # 调用 Qwen API
             response = MultiModalConversation.call(
-                model="qwen-vl-plus",
+                model="qwen3.7-plus",
                 messages=[
                     {
                         "role": "system",
@@ -93,20 +91,25 @@ class QwenVisionService:
                         "role": "user",
                         "content": [
                             {"type": "image", "image": f"data:{mime_type};base64,{image_base64}"},
-                            {"type": "text", "text": "请识别这张账单/收据，提取所有消费项目信息。"},
+                            {"type": "text", "text": "请识别这张账单/收据图片，直接输出 JSON，需要包含字段商户名称、金额、日期（格式：YYYY-MM-DD 或 YYYY-MM-DD HH:MM:SS）、分类（可选）、备注（可选），不要加任何其他文字。"},
                         ],
                     },
                 ],
             )
 
+            _log.info(f"[QwenAPI] status_code={response.status_code}")
+            _log.info(f"[QwenAPI] raw response={response}")
+
             if response.status_code != 200:
+                _log.error(f"[QwenAPI] FAILED code={getattr(response, 'code', '?')} message={getattr(response, 'message', '?')}")
                 raise QwenAPIError(
-                    f"Qwen API error: {response.code}",
-                    detail=response.message if hasattr(response, "message") else str(response),
+                    f"Qwen API error: {getattr(response, 'code', response.status_code)}",
+                    detail=getattr(response, "message", str(response)),
                 )
 
             # 提取返回内容
             result = response.output.choices[0].message.content[0]["text"]
+            _log.info(f"[QwenAPI] model output={result}")
             return result
 
         except FileError as e:

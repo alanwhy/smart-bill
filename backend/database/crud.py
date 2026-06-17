@@ -187,6 +187,7 @@ def list_bills(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     category_id: Optional[int] = None,
+    merchant_name: Optional[str] = None,
 ) -> List[BillRecord]:
     """查询账单列表"""
     try:
@@ -196,10 +197,13 @@ def list_bills(
             query = query.filter(BillRecord.transaction_date >= start_date)
 
         if end_date:
-            query = query.filter(BillRecord.transaction_date <= end_date)
+            query = query.filter(BillRecord.transaction_date <= end_date + "T23:59:59")
 
         if category_id:
             query = query.filter(BillRecord.category_id == category_id)
+
+        if merchant_name:
+            query = query.filter(BillRecord.merchant_name.ilike(f"%{merchant_name}%"))
 
         return query.order_by(BillRecord.transaction_date.desc()).all()
     except Exception as e:
@@ -226,6 +230,7 @@ def update_bill(
     value: Optional[float] = None,
     transaction_date: Optional[str] = None,
     category_id: Optional[int] = None,
+    description: Optional[str] = None,
 ) -> BillRecord:
     """更新账单"""
     try:
@@ -241,6 +246,8 @@ def update_bill(
             # 校验分类存在
             get_category(db, category_id)
             bill.category_id = category_id
+        if description is not None:
+            bill.description = description
 
         bill.updated_at = datetime.utcnow()
         db.commit()

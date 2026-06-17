@@ -73,6 +73,19 @@
           />
         </div>
 
+        <!-- 备注 -->
+        <div>
+          <label class="block text-sm font-medium text-text mb-2">备注</label>
+          <textarea
+            v-model="formData.description"
+            :maxlength="100"
+            rows="2"
+            placeholder="可选，最多 100 字"
+            class="input resize-none"
+          />
+          <p class="text-xs text-text-muted mt-1 text-right">{{ (formData.description || '').length }}/100</p>
+        </div>
+
         <!-- 错误提示 -->
         <div v-if="errorMessage" class="p-3 bg-error/10 border border-error/30 rounded-lg">
           <p class="text-sm text-error">{{ errorMessage }}</p>
@@ -129,6 +142,7 @@ const formData = reactive({
   merchant_name: props.bill.merchant_name,
   category_id: props.bill.category_id,
   transaction_date: convertToDatetimeLocal(props.bill.transaction_date),
+  description: props.bill.description || '',
 })
 
 onMounted(() => {
@@ -170,6 +184,7 @@ const handleSubmit = async () => {
       merchant_name: formData.merchant_name,
       category_id: formData.category_id,
       transaction_date: new Date(formData.transaction_date).toISOString(),
+      description: formData.description || undefined,
     })
 
     emit('update')

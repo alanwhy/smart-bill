@@ -13,6 +13,7 @@
           </div>
         </div>
         <p class="text-xs text-text-muted">{{ formatDate(bill.transaction_date) }}</p>
+        <p v-if="bill.description" class="text-xs text-text-muted mt-0.5 truncate">{{ bill.description }}</p>
       </div>
 
       <!-- 右侧操作 -->
@@ -23,7 +24,7 @@
 
         <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1">
           <button
-            @click.stop="$emit('edit')"
+            @click.stop="$emit('edit', bill)"
             class="p-2 hover:bg-surface rounded-lg transition-colors duration-200"
             title="编辑"
           >
@@ -56,7 +57,7 @@ defineProps<{
 }>()
 
 defineEmits<{
-  edit: []
+  edit: [bill: BillRecord]
   delete: []
 }>()
 

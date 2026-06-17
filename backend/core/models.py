@@ -130,6 +130,7 @@ class BillRecordInDB(BaseModel):
     category_id: int = Field(..., description="分类 ID")
     category: CategoryBrief = Field(..., description="分类详情")
     image_path: Optional[str] = Field(default=None, description="图片路径")
+    description: Optional[str] = Field(default=None, description="账单备注", max_length=100)
     created_at: datetime = Field(..., description="创建时间")
     updated_at: datetime = Field(..., description="更新时间")
 
@@ -153,6 +154,7 @@ class UpdateBillRequest(BaseModel):
     merchant_name: Optional[str] = Field(default=None, description="商户名称", min_length=1)
     transaction_date: Optional[str] = Field(default=None, description="交易日期")
     category_id: Optional[int] = Field(default=None, description="分类 ID", ge=1)
+    description: Optional[str] = Field(default=None, description="账单备注", max_length=100)
 
     class Config:
         json_schema_extra = {

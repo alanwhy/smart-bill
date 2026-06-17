@@ -9,14 +9,18 @@
           type="date"
           class="input"
           placeholder="开始日期"
+          @change="onStartDateChange"
         />
         <input
           v-model="localFilters.endDate"
           type="date"
           class="input"
           placeholder="结束日期"
+          :min="localFilters.startDate || undefined"
+          @change="applyFilters"
         />
       </div>
+      <p v-if="dateError" class="text-xs text-error">{{ dateError }}</p>
     </div>
 
     <!-- 分类选择 -->
@@ -50,22 +54,17 @@
         type="text"
         placeholder="搜索商户..."
         class="input"
+        @input="onSearchInput"
       />
     </div>
 
     <!-- 操作按钮 -->
     <div class="flex gap-2 pt-4 border-t border-border">
       <button
-        @click="handleApply"
-        class="btn btn-primary flex-1"
-      >
-        应用筛选
-      </button>
-      <button
         @click="handleClear"
         class="btn btn-secondary flex-1"
       >
-        清除筛选
+        重置筛选
       </button>
       <button
         v-if="isModal"
@@ -81,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useUiStore } from '@/stores/ui'
 import { useCategoriesStore } from '@/stores/categories'
 
@@ -98,6 +97,7 @@ const uiStore = useUiStore()
 const categoriesStore = useCategoriesStore()
 
 const categories = computed(() => categoriesStore.sortedCategories)
+const dateError = ref('')
 
 const localFilters = reactive({
   startDate: uiStore.filters.startDate || '',
@@ -106,15 +106,18 @@ const localFilters = reactive({
   searchText: uiStore.filters.searchText || '',
 })
 
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
 onMounted(() => {
   categoriesStore.getOrFetch()
 })
 
-const toggleCategory = (id: number) => {
-  localFilters.category_id = localFilters.category_id === id ? undefined : id
-}
-
-const handleApply = () => {
+const applyFilters = () => {
+  dateError.value = ''
+  if (localFilters.startDate && localFilters.endDate && localFilters.startDate > localFilters.endDate) {
+    dateError.value = '结束日期不能早于开始日期'
+    return
+  }
   uiStore.setFilters({
     startDate: localFilters.startDate || undefined,
     endDate: localFilters.endDate || undefined,
@@ -124,11 +127,31 @@ const handleApply = () => {
   emit('apply')
 }
 
+const onStartDateChange = () => {
+  if (localFilters.endDate && localFilters.startDate > localFilters.endDate) {
+    localFilters.endDate = localFilters.startDate
+  }
+  applyFilters()
+}
+
+const toggleCategory = (id: number) => {
+  localFilters.category_id = localFilters.category_id === id ? undefined : id
+  applyFilters()
+}
+
+const onSearchInput = () => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(() => {
+    applyFilters()
+  }, 400)
+}
+
 const handleClear = () => {
   localFilters.startDate = ''
   localFilters.endDate = ''
   localFilters.category_id = undefined
   localFilters.searchText = ''
+  dateError.value = ''
   uiStore.clearFilters()
   emit('apply')
 }

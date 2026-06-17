@@ -28,11 +28,15 @@ export const billApi = {
     startDate?: string
     endDate?: string
     category_id?: number
+    searchText?: string
   }): Promise<BillRecord[]> {
     const response = await client.get('/bills', {
       params: {
         user_id: userId,
-        ...params,
+        start_date: params?.startDate,
+        end_date: params?.endDate,
+        category_id: params?.category_id,
+        merchant_name: params?.searchText || undefined,
       },
     })
 

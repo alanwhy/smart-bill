@@ -33,12 +33,14 @@ class BillParser:
     @staticmethod
     def _parse_json_format(response: str, categories: Sequence[Category]) -> List[BillItem]:
         """解析 JSON 格式的响应"""
-        json_match = re.search(r"```json\n(.*?)\n```", response, re.DOTALL)
+        # 优先尝试 ```json ... ``` 代码块
+        json_match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", response, re.DOTALL)
         if json_match:
-            json_str = json_match.group(1)
-        elif response.strip().startswith("{"):
+            json_str = json_match.group(1).strip()
+        elif response.strip().startswith(("{", "[")):
             json_str = response.strip()
         else:
+            # 从文本中提取最外层 JSON 对象
             json_match = re.search(r"\{.*\}", response, re.DOTALL)
             if not json_match:
                 raise ValueError("No JSON found in response")
@@ -46,11 +48,18 @@ class BillParser:
 
         data = json.loads(json_str)
 
-        if not isinstance(data, dict) or "items" not in data:
-            raise ValueError("Invalid JSON structure: missing 'items' key")
+        # 兼容直接返回数组的情况
+        if isinstance(data, list):
+            raw_items = data
+        elif isinstance(data, dict):
+            if "items" not in data:
+                raise ValueError("Invalid JSON structure: missing 'items' key")
+            raw_items = data["items"]
+        else:
+            raise ValueError("Unexpected JSON root type")
 
         items = []
-        for item in data["items"]:
+        for item in raw_items:
             bill_item = BillParser._build_bill_item(item, categories)
             items.append(bill_item)
 

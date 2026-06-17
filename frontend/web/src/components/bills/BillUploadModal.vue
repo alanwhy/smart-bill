@@ -32,7 +32,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
           <p class="text-sm font-medium text-text mb-1">点击或拖放上传账单图片</p>
-          <p class="text-xs text-text-muted">支持 JPG、PNG，单个文件不超过 5MB</p>
+          <p class="text-xs text-text-muted">支持 JPG、PNG，单个不超过 5MB，最多 5 个文件</p>
 
           <input
             ref="fileInput"
@@ -78,7 +78,7 @@
         <div v-if="isUploading">
           <div class="flex items-center justify-between mb-2">
             <p class="text-sm font-medium text-text">上传中...</p>
-            <p class="text-sm text-text-muted">{{ uploadProgress }}%</p>
+            <p class="text-sm text-text-muted">{{ uploadProgress.toFixed(2) }}%</p>
           </div>
           <div class="w-full h-2 bg-surface rounded-full overflow-hidden">
             <div
@@ -153,6 +153,11 @@ const addFiles = (files: File[]) => {
   errorMessage.value = ''
 
   for (const file of files) {
+    if (selectedFiles.value.length >= 5) {
+      errorMessage.value = '最多选择 5 个文件'
+      break
+    }
+
     // 验证文件类型
     if (!file.type.startsWith('image/')) {
       errorMessage.value = '只支持图片文件'

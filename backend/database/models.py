@@ -54,6 +54,7 @@ class BillRecord(Base):
         comment="分类 ID（外键）",
     )
     image_path = Column(Text, nullable=True, comment="原始图片路径")
+    description = Column(String(100), nullable=True, default="", comment="账单备注")
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True, comment="创建时间")
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False, comment="更新时间")
 

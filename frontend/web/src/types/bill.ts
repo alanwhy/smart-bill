@@ -42,6 +42,7 @@ export interface BillRecord {
   category_id: number
   category: CategoryBrief
   image_path?: string
+  description?: string
   created_at: string
   updated_at: string
 }
@@ -51,6 +52,7 @@ export interface UpdateBillRequest {
   merchant_name?: string
   transaction_date?: string
   category_id?: number
+  description?: string
 }
 
 export interface ApiResponse<T = any> {

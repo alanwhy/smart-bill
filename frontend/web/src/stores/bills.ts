@@ -18,6 +18,7 @@ export const useBillsStore = defineStore('bills', () => {
         startDate: filters?.startDate,
         endDate: filters?.endDate,
         category_id: filters?.category_id,
+        searchText: filters?.searchText,
       }
 
       bills.value = await billApi.listBills(userId, params)

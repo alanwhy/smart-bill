@@ -60,6 +60,18 @@ def init_db():
 
         Base.metadata.create_all(bind=engine)
 
+        # 迁移：为旧库添加 description 列（幂等）
+        with engine.connect() as conn:
+            try:
+                conn.execute(
+                    __import__("sqlalchemy").text(
+                        "ALTER TABLE bill_records ADD COLUMN description VARCHAR(100) DEFAULT ''"
+                    )
+                )
+                conn.commit()
+            except Exception:
+                pass  # 列已存在则忽略
+
         db = SessionLocal()
         try:
             seed_default_categories(db)

@@ -60,6 +60,7 @@ def list_bills(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     category_id: Optional[int] = None,
+    merchant_name: Optional[str] = None,
     db: Session = Depends(get_db),
 ) -> BillResponse:
     """查询账单列表"""
@@ -67,7 +68,7 @@ def list_bills(
         validate_user_id(user_id)
         validate_date_range(start_date, end_date)
 
-        bills = crud.list_bills(db, user_id, start_date, end_date, category_id)
+        bills = crud.list_bills(db, user_id, start_date, end_date, category_id, merchant_name)
         bill_records = [BillRecordInDB.model_validate(bill) for bill in bills]
         return BillResponse(code=0, msg="success", data=bill_records)
 
@@ -91,6 +92,7 @@ def update_bill(
             value=request.value,
             transaction_date=request.transaction_date,
             category_id=request.category_id,
+            description=request.description,
         )
         return BillResponse(code=0, msg="success", data=BillRecordInDB.model_validate(bill))
 

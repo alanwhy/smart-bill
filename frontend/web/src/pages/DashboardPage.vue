@@ -15,7 +15,7 @@
         <div class="flex gap-3">
           <button
             @click="openFilterSheet"
-            class="btn btn-secondary btn-sm"
+            class="btn btn-secondary btn-sm lg:hidden"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -87,7 +87,7 @@
           v-for="bill in billsStore.bills"
           :key="bill.id"
           :bill="bill"
-          @edit="editBill"
+          @edit="(b) => editBill(b)"
           @delete="deleteBill"
         />
       </div>
@@ -107,6 +107,17 @@
       @close="editingBill = null"
       @update="onBillUpdated"
     />
+
+    <!-- 删除确认弹窗 -->
+    <ConfirmDialog
+      v-if="deletingBillId !== null"
+      title="删除账单"
+      message="确定删除这条账单吗？此操作无法撤销。"
+      confirm-label="删除"
+      :danger="true"
+      @confirm="confirmDelete"
+      @cancel="deletingBillId = null"
+    />
   </div>
 </template>
 
@@ -119,12 +130,14 @@ import BillCard from '@/components/bills/BillCard.vue'
 import BillFilters from '@/components/bills/BillFilters.vue'
 import BillUploadModal from '@/components/bills/BillUploadModal.vue'
 import BillEditModal from '@/components/bills/BillEditModal.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
 const billsStore = useBillsStore()
 const uiStore = useUiStore()
 
 const showUploadModal = ref(false)
 const editingBill = ref<BillRecord | null>(null)
+const deletingBillId = ref<number | null>(null)
 
 const isLoading = computed(() => billsStore.isLoading)
 const totalExpense = computed(() => billsStore.totalExpense)
@@ -157,13 +170,18 @@ const editBill = (bill: BillRecord) => {
   editingBill.value = bill
 }
 
-const deleteBill = async (billId: number) => {
-  if (confirm('确定删除这条账单吗？')) {
-    try {
-      await billsStore.deleteBill(billId)
-    } catch (e) {
-      alert(`删除失败: ${(e as Error).message}`)
-    }
+const deleteBill = (billId: number) => {
+  deletingBillId.value = billId
+}
+
+const confirmDelete = async () => {
+  if (deletingBillId.value === null) return
+  try {
+    await billsStore.deleteBill(deletingBillId.value)
+  } catch (e) {
+    alert(`删除失败: ${(e as Error).message}`)
+  } finally {
+    deletingBillId.value = null
   }
 }
 
