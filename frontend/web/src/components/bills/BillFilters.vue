@@ -22,19 +22,19 @@
     <!-- 分类选择 -->
     <div class="space-y-2">
       <label class="block text-sm font-medium text-text">分类</label>
-      <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
+      <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-2">
         <button
           v-for="cat in categories"
           :key="cat.value"
           @click="toggleCategory(cat.value)"
           :class="[
-            'p-3 rounded-lg border-2 transition-all duration-200',
+            'p-2 rounded-lg border-2 transition-all duration-200 flex flex-col items-center',
             localFilters.category === cat.value
               ? 'border-primary bg-primary/10'
               : 'border-border bg-surface hover:border-primary/50',
           ]"
         >
-          <div class="text-lg mb-1">{{ cat.icon }}</div>
+          <div class="text-base mb-0.5">{{ cat.icon }}</div>
           <div class="text-xs text-text-secondary">{{ cat.label }}</div>
         </button>
       </div>

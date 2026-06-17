@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-full pb-20 lg:pb-0">
     <!-- 顶部操作栏 -->
-    <div class="sticky top-16 z-30 bg-surface/80 backdrop-blur-md border-b border-border">
+    <div class="sticky top-0 z-30 bg-surface border-b border-border">
       <div class="px-4 sm:px-6 lg:px-8 py-4 space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
         <!-- 统计信息 -->
         <div class="flex items-center gap-4">

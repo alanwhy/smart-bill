@@ -5,6 +5,7 @@ import re
 from typing import List
 
 from backend.core import BillCategory, BillItem, ValidationError
+from backend.utils import logger
 
 
 class BillParser:
@@ -13,6 +14,7 @@ class BillParser:
     @staticmethod
     def parse_qwen_output(qwen_response: str) -> List[BillItem]:
         """解析 Qwen 的响应，提取账单项目"""
+        logger.info(f"[BillParser] Qwen 原始返回内容:\n{qwen_response}")
         try:
             # 尝试 JSON 格式解析
             return BillParser._parse_json_format(qwen_response)
@@ -21,6 +23,7 @@ class BillParser:
             try:
                 return BillParser._parse_text_format(qwen_response)
             except Exception as e:
+                logger.error(f"[BillParser] 文本格式解析也失败，原始内容已记录在上方")
                 raise ValidationError(f"Failed to parse bill data: {str(e)}")
 
     @staticmethod

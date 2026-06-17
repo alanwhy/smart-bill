@@ -41,11 +41,11 @@
           </div>
 
           <!-- 搜索框 -->
-          <div class="hidden md:block flex-1 max-w-md">
+          <div class="flex flex-1 justify-center px-4 lg:px-8">
             <input
               type="text"
               placeholder="搜索账单..."
-              class="input text-sm"
+              class="input text-sm max-w-md"
             />
           </div>
 
