@@ -119,7 +119,7 @@
 import { ref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 
-defineEmits<{
+const emit = defineEmits<{
   close: []
   success: []
 }>()
@@ -205,10 +205,12 @@ const handleUpload = async () => {
 
     // 延迟后关闭
     setTimeout(() => {
-      $emit('success')
+      selectedFiles.value = []
+      errorMessage.value = ''
+      emit('success')
     }, 500)
   } catch (e) {
-    errorMessage.value = (e as Error).message
+    errorMessage.value = (e as Error).message || '上传失败，请重试'
   } finally {
     isUploading.value = false
   }
