@@ -123,14 +123,14 @@ def delete_category(db: Session, category_id: int) -> bool:
         if ref_count > 0:
             raise ValidationError(
                 "Cannot delete category with bills",
-                detail=f"Category '{category.name}' is still used by {ref_count} bill(s)",
+                detail=f"分类「{category.name}」下还有账单，请先修改这些账单的分类后再删除",
             )
 
         total = db.query(Category).count()
         if total <= 1:
             raise ValidationError(
                 "Cannot delete the last category",
-                detail="At least one category must exist",
+                detail="至少保留一个分类，无法删除",
             )
 
         db.delete(category)
