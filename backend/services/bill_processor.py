@@ -58,8 +58,9 @@ class BillProcessor:
             # Step 3: 调用 Qwen 识别
             qwen_response = self._get_qwen_service().call_qwen_vision(temp_file_path)
 
-            # Step 4: 解析响应
-            bill_items = self.bill_parser.parse_qwen_output(qwen_response)
+            # Step 4: 加载分类用于模糊匹配，再解析响应
+            categories = crud.list_categories(db)
+            bill_items = self.bill_parser.parse_qwen_output(qwen_response, categories)
 
             # Step 5: 保存到数据库
             for bill_item in bill_items:
@@ -69,7 +70,7 @@ class BillProcessor:
                     merchant_name=bill_item.name,
                     value=bill_item.value,
                     transaction_date=bill_item.date,
-                    category=bill_item.category,
+                    category_id=bill_item.category_id,
                     image_path=temp_file_path,
                 )
 

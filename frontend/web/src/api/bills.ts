@@ -27,7 +27,7 @@ export const billApi = {
   async listBills(userId: number, params?: {
     startDate?: string
     endDate?: string
-    category?: string
+    category_id?: number
   }): Promise<BillRecord[]> {
     const response = await client.get('/bills', {
       params: {

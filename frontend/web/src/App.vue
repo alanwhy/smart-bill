@@ -17,6 +17,16 @@
           <span>账单列表</span>
         </router-link>
         <router-link
+          to="/categories"
+          class="mt-2 flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200"
+          :class="$route.path === '/categories' ? 'bg-primary text-background' : 'hover:bg-border text-text'"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          <span>分类管理</span>
+        </router-link>
+        <router-link
           to="/settings"
           class="mt-2 flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200"
           :class="$route.path === '/settings' ? 'bg-primary text-background' : 'hover:bg-border text-text'"
@@ -80,6 +90,16 @@
           <span class="text-xs">账单</span>
         </router-link>
         <router-link
+          to="/categories"
+          class="flex flex-col items-center justify-center gap-1 flex-1 h-full"
+          :class="$route.path === '/categories' ? 'text-primary' : 'text-text-muted'"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          <span class="text-xs">分类</span>
+        </router-link>
+        <router-link
           to="/settings"
           class="flex flex-col items-center justify-center gap-1 flex-1 h-full"
           :class="$route.path === '/settings' ? 'text-primary' : 'text-text-muted'"
@@ -99,6 +119,14 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { useCategoriesStore } from '@/stores/categories'
+
+const categoriesStore = useCategoriesStore()
+
+onMounted(() => {
+  categoriesStore.getOrFetch()
+})
 </script>
 
 <style scoped>

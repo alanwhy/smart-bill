@@ -22,20 +22,22 @@
     <!-- 分类选择 -->
     <div class="space-y-2">
       <label class="block text-sm font-medium text-text">分类</label>
-      <div class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-2">
+      <p v-if="categoriesStore.isLoading && categories.length === 0" class="text-xs text-text-muted">加载中...</p>
+      <p v-else-if="categories.length === 0" class="text-xs text-text-muted">暂无分类</p>
+      <div v-else class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-2">
         <button
           v-for="cat in categories"
-          :key="cat.value"
-          @click="toggleCategory(cat.value)"
+          :key="cat.id"
+          @click="toggleCategory(cat.id)"
           :class="[
             'p-2 rounded-lg border-2 transition-all duration-200 flex flex-col items-center',
-            localFilters.category === cat.value
+            localFilters.category_id === cat.id
               ? 'border-primary bg-primary/10'
               : 'border-border bg-surface hover:border-primary/50',
           ]"
         >
           <div class="text-base mb-0.5">{{ cat.icon }}</div>
-          <div class="text-xs text-text-secondary">{{ cat.label }}</div>
+          <div class="text-xs text-text-secondary">{{ cat.name }}</div>
         </button>
       </div>
     </div>
@@ -67,7 +69,7 @@
       </button>
       <button
         v-if="isModal"
-        @click="$emit('close')"
+        @click="emit('close')"
         class="btn btn-ghost"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,50 +81,55 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 import { useUiStore } from '@/stores/ui'
-import { BILL_CATEGORIES } from '@/types/bill'
+import { useCategoriesStore } from '@/stores/categories'
 
 defineProps<{
   isModal?: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   apply: []
   close: []
 }>()
 
 const uiStore = useUiStore()
+const categoriesStore = useCategoriesStore()
 
-const categories = BILL_CATEGORIES
+const categories = computed(() => categoriesStore.sortedCategories)
 
 const localFilters = reactive({
   startDate: uiStore.filters.startDate || '',
   endDate: uiStore.filters.endDate || '',
-  category: uiStore.filters.category || '',
+  category_id: uiStore.filters.category_id as number | undefined,
   searchText: uiStore.filters.searchText || '',
 })
 
-const toggleCategory = (cat: string) => {
-  localFilters.category = localFilters.category === cat ? '' : cat
+onMounted(() => {
+  categoriesStore.getOrFetch()
+})
+
+const toggleCategory = (id: number) => {
+  localFilters.category_id = localFilters.category_id === id ? undefined : id
 }
 
 const handleApply = () => {
   uiStore.setFilters({
     startDate: localFilters.startDate || undefined,
     endDate: localFilters.endDate || undefined,
-    category: localFilters.category || undefined,
+    category_id: localFilters.category_id,
     searchText: localFilters.searchText || undefined,
   })
-  $emit('apply')
+  emit('apply')
 }
 
 const handleClear = () => {
   localFilters.startDate = ''
   localFilters.endDate = ''
-  localFilters.category = ''
+  localFilters.category_id = undefined
   localFilters.searchText = ''
   uiStore.clearFilters()
-  $emit('apply')
+  emit('apply')
 }
 </script>

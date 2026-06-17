@@ -3,10 +3,149 @@
 from datetime import datetime
 from typing import List, Optional
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from backend.core.exceptions import DatabaseError, ResourceNotFoundError
-from backend.database.models import BillRecord
+from backend.core.exceptions import DatabaseError, ResourceNotFoundError, ValidationError
+from backend.database.models import BillRecord, Category
+
+
+# ---------------------------------------------------------------------------
+# Category CRUD
+# ---------------------------------------------------------------------------
+
+
+def create_category(
+    db: Session,
+    name: str,
+    icon: str = "",
+    color: str = "#6B7280",
+    sort_order: Optional[int] = None,
+) -> Category:
+    """创建分类"""
+    try:
+        existing = db.query(Category).filter(Category.name == name).first()
+        if existing:
+            raise ValidationError(
+                "Category name already exists",
+                detail=f"Category with name '{name}' already exists",
+            )
+
+        if sort_order is None:
+            current_max = db.query(func.max(Category.sort_order)).scalar()
+            sort_order = (current_max + 1) if current_max is not None else 0
+
+        category = Category(name=name, icon=icon, color=color, sort_order=sort_order)
+        db.add(category)
+        db.commit()
+        db.refresh(category)
+        return category
+    except ValidationError:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise DatabaseError(f"Failed to create category: {str(e)}")
+
+
+def list_categories(db: Session) -> List[Category]:
+    """查询全部分类，按 sort_order/id 升序"""
+    try:
+        return db.query(Category).order_by(Category.sort_order.asc(), Category.id.asc()).all()
+    except Exception as e:
+        raise DatabaseError(f"Failed to list categories: {str(e)}")
+
+
+def get_category(db: Session, category_id: int) -> Category:
+    """获取单个分类"""
+    try:
+        category = db.query(Category).filter(Category.id == category_id).first()
+        if not category:
+            raise ResourceNotFoundError("Category", category_id)
+        return category
+    except ResourceNotFoundError:
+        raise
+    except Exception as e:
+        raise DatabaseError(f"Failed to get category: {str(e)}")
+
+
+def get_category_by_name(db: Session, name: str) -> Optional[Category]:
+    """根据名称获取分类（精确匹配，未找到返回 None）"""
+    try:
+        return db.query(Category).filter(Category.name == name).first()
+    except Exception as e:
+        raise DatabaseError(f"Failed to query category by name: {str(e)}")
+
+
+def update_category(
+    db: Session,
+    category_id: int,
+    name: Optional[str] = None,
+    icon: Optional[str] = None,
+    color: Optional[str] = None,
+    sort_order: Optional[int] = None,
+) -> Category:
+    """更新分类"""
+    try:
+        category = get_category(db, category_id)
+
+        if name is not None and name != category.name:
+            duplicate = db.query(Category).filter(Category.name == name, Category.id != category_id).first()
+            if duplicate:
+                raise ValidationError(
+                    "Category name already exists",
+                    detail=f"Category with name '{name}' already exists",
+                )
+            category.name = name
+        if icon is not None:
+            category.icon = icon
+        if color is not None:
+            category.color = color
+        if sort_order is not None:
+            category.sort_order = sort_order
+
+        category.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(category)
+        return category
+    except (ResourceNotFoundError, ValidationError):
+        raise
+    except Exception as e:
+        db.rollback()
+        raise DatabaseError(f"Failed to update category: {str(e)}")
+
+
+def delete_category(db: Session, category_id: int) -> bool:
+    """删除分类（仍被账单引用或最后一个时拒绝）"""
+    try:
+        category = get_category(db, category_id)
+
+        ref_count = db.query(BillRecord).filter(BillRecord.category_id == category_id).count()
+        if ref_count > 0:
+            raise ValidationError(
+                "Cannot delete category with bills",
+                detail=f"Category '{category.name}' is still used by {ref_count} bill(s)",
+            )
+
+        total = db.query(Category).count()
+        if total <= 1:
+            raise ValidationError(
+                "Cannot delete the last category",
+                detail="At least one category must exist",
+            )
+
+        db.delete(category)
+        db.commit()
+        return True
+    except (ResourceNotFoundError, ValidationError):
+        raise
+    except Exception as e:
+        db.rollback()
+        raise DatabaseError(f"Failed to delete category: {str(e)}")
+
+
+# ---------------------------------------------------------------------------
+# Bill CRUD
+# ---------------------------------------------------------------------------
 
 
 def create_bill(
@@ -15,23 +154,28 @@ def create_bill(
     merchant_name: str,
     value: float,
     transaction_date: str,
-    category: str,
+    category_id: int,
     image_path: Optional[str] = None,
 ) -> BillRecord:
     """创建账单记录"""
     try:
+        # 校验分类存在
+        get_category(db, category_id)
+
         bill = BillRecord(
             user_id=user_id,
             merchant_name=merchant_name,
             value=value,
             transaction_date=transaction_date,
-            category=category,
+            category_id=category_id,
             image_path=image_path,
         )
         db.add(bill)
         db.commit()
         db.refresh(bill)
         return bill
+    except (ResourceNotFoundError, DatabaseError):
+        raise
     except Exception as e:
         db.rollback()
         raise DatabaseError(f"Failed to create bill: {str(e)}")
@@ -42,7 +186,7 @@ def list_bills(
     user_id: int,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    category: Optional[str] = None,
+    category_id: Optional[int] = None,
 ) -> List[BillRecord]:
     """查询账单列表"""
     try:
@@ -54,8 +198,8 @@ def list_bills(
         if end_date:
             query = query.filter(BillRecord.transaction_date <= end_date)
 
-        if category:
-            query = query.filter(BillRecord.category == category)
+        if category_id:
+            query = query.filter(BillRecord.category_id == category_id)
 
         return query.order_by(BillRecord.transaction_date.desc()).all()
     except Exception as e:
@@ -81,7 +225,7 @@ def update_bill(
     merchant_name: Optional[str] = None,
     value: Optional[float] = None,
     transaction_date: Optional[str] = None,
-    category: Optional[str] = None,
+    category_id: Optional[int] = None,
 ) -> BillRecord:
     """更新账单"""
     try:
@@ -93,8 +237,10 @@ def update_bill(
             bill.value = value
         if transaction_date is not None:
             bill.transaction_date = transaction_date
-        if category is not None:
-            bill.category = category
+        if category_id is not None:
+            # 校验分类存在
+            get_category(db, category_id)
+            bill.category_id = category_id
 
         bill.updated_at = datetime.utcnow()
         db.commit()

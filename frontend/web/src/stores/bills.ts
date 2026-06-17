@@ -17,7 +17,7 @@ export const useBillsStore = defineStore('bills', () => {
       const params = {
         startDate: filters?.startDate,
         endDate: filters?.endDate,
-        category: filters?.category,
+        category_id: filters?.category_id,
       }
 
       bills.value = await billApi.listBills(userId, params)
@@ -83,14 +83,14 @@ export const useBillsStore = defineStore('bills', () => {
     }
   }
 
-  // 按分类分组
+  // 按分类分组（按 category_id）
   const billsByCategory = computed(() => {
-    const grouped: Record<string, BillRecord[]> = {}
+    const grouped: Record<number, BillRecord[]> = {}
     bills.value.forEach((bill) => {
-      if (!grouped[bill.category]) {
-        grouped[bill.category] = []
+      if (!grouped[bill.category_id]) {
+        grouped[bill.category_id] = []
       }
-      grouped[bill.category].push(bill)
+      grouped[bill.category_id].push(bill)
     })
     return grouped
   })
@@ -100,11 +100,11 @@ export const useBillsStore = defineStore('bills', () => {
     return bills.value.reduce((sum, bill) => sum + bill.value, 0)
   })
 
-  // 分类统计
+  // 分类统计（按 category_id）
   const expenseByCategory = computed(() => {
-    const result: Record<string, number> = {}
+    const result: Record<number, number> = {}
     bills.value.forEach((bill) => {
-      result[bill.category] = (result[bill.category] || 0) + bill.value
+      result[bill.category_id] = (result[bill.category_id] || 0) + bill.value
     })
     return result
   })

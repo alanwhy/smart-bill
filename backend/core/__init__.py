@@ -1,6 +1,5 @@
 """Core module - 核心数据模型和类型定义"""
 
-from .enums import BillCategory
 from .exceptions import (
     DatabaseError,
     FileError,
@@ -13,13 +12,16 @@ from .models import (
     BillItem,
     BillRecordInDB,
     BillResponse,
+    CategoryBrief,
+    CategoryInDB,
+    CreateCategoryRequest,
     ErrorResponse,
     UpdateBillRequest,
+    UpdateCategoryRequest,
     UploadRequest,
 )
 
 __all__ = [
-    "BillCategory",
     "SmartBillException",
     "ValidationError",
     "FileError",
@@ -32,4 +34,8 @@ __all__ = [
     "BillRecordInDB",
     "UploadRequest",
     "UpdateBillRequest",
+    "CategoryBrief",
+    "CategoryInDB",
+    "CreateCategoryRequest",
+    "UpdateCategoryRequest",
 ]

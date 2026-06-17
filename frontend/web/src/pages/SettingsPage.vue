@@ -35,18 +35,22 @@
 
       <!-- 账单分类 -->
       <div class="card p-6 mb-6">
-        <h2 class="text-lg font-semibold text-text mb-4">账单分类</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-text">账单分类</h2>
+          <router-link to="/categories" class="btn btn-secondary btn-sm">管理分类</router-link>
+        </div>
+        <p v-if="categoriesStore.isLoading && categories.length === 0" class="text-xs text-text-muted">加载中...</p>
+        <p v-else-if="categories.length === 0" class="text-xs text-text-muted">暂无分类</p>
+        <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <div
-            v-for="category in categories"
-            :key="category.value"
+            v-for="cat in categories"
+            :key="cat.id"
             class="p-4 rounded-lg bg-surface border border-border text-center"
           >
-            <div class="text-2xl mb-2">{{ category.icon }}</div>
-            <div class="text-sm text-text-secondary">{{ category.label }}</div>
+            <div class="text-2xl mb-2">{{ cat.icon }}</div>
+            <div class="text-sm text-text-secondary">{{ cat.name }}</div>
           </div>
         </div>
-        <p class="text-xs text-text-muted mt-4">分类由系统定义，后续版本将支持自定义</p>
       </div>
 
       <!-- 关于 -->
@@ -72,13 +76,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { BILL_CATEGORIES } from '@/types/bill'
+import { computed, onMounted, ref } from 'vue'
+import { useCategoriesStore } from '@/stores/categories'
 
 const userId = ref<number>(1)
 const isSaving = ref(false)
 
-const categories = BILL_CATEGORIES
+const categoriesStore = useCategoriesStore()
+const categories = computed(() => categoriesStore.sortedCategories)
 
 const savedUserId = computed(() => {
   return localStorage.getItem('userId') || '1'
@@ -89,6 +94,7 @@ onMounted(() => {
   if (stored) {
     userId.value = parseInt(stored)
   }
+  categoriesStore.getOrFetch()
 })
 
 const saveUserId = async () => {

@@ -1,15 +1,46 @@
+export interface CategoryBrief {
+  id: number
+  name: string
+  icon: string
+  color: string
+}
+
+export interface Category extends CategoryBrief {
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateCategoryRequest {
+  name: string
+  icon?: string
+  color?: string
+  sort_order?: number
+}
+
+export interface UpdateCategoryRequest {
+  name?: string
+  icon?: string
+  color?: string
+  sort_order?: number
+}
+
 export interface BillItem {
   value: number
   name: string
   date: string // ISO 8601 format
-  category: string
+  category_id: number
+  category: CategoryBrief
 }
 
-export interface BillRecord extends BillItem {
+export interface BillRecord {
   id: number
   user_id: number
+  value: number
   merchant_name: string
   transaction_date: string
+  category_id: number
+  category: CategoryBrief
   image_path?: string
   created_at: string
   updated_at: string
@@ -19,7 +50,7 @@ export interface UpdateBillRequest {
   value?: number
   merchant_name?: string
   transaction_date?: string
-  category?: string
+  category_id?: number
 }
 
 export interface ApiResponse<T = any> {
@@ -28,21 +59,9 @@ export interface ApiResponse<T = any> {
   data: T
 }
 
-export const BILL_CATEGORIES = [
-  { value: '餐饮', label: '餐饮', icon: '🍽️' },
-  { value: '交通', label: '交通', icon: '🚗' },
-  { value: '购物', label: '购物', icon: '🛍️' },
-  { value: '娱乐', label: '娱乐', icon: '🎬' },
-  { value: '医疗', label: '医疗', icon: '🏥' },
-  { value: '住房', label: '住房', icon: '🏠' },
-  { value: '其他', label: '其他', icon: '📦' },
-] as const
-
-export type BillCategory = typeof BILL_CATEGORIES[number]['value']
-
 export interface BillFilter {
   startDate?: string
   endDate?: string
-  category?: string
+  category_id?: number
   searchText?: string
 }

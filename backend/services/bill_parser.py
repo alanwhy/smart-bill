@@ -2,9 +2,10 @@
 
 import json
 import re
-from typing import List
+from typing import List, Optional, Sequence
 
-from backend.core import BillCategory, BillItem, ValidationError
+from backend.core import BillItem, CategoryBrief, ValidationError
+from backend.database.models import Category
 from backend.utils import logger
 
 
@@ -12,32 +13,32 @@ class BillParser:
     """账单数据解析器"""
 
     @staticmethod
-    def parse_qwen_output(qwen_response: str) -> List[BillItem]:
-        """解析 Qwen 的响应，提取账单项目"""
+    def parse_qwen_output(qwen_response: str, categories: Sequence[Category]) -> List[BillItem]:
+        """解析 Qwen 的响应，提取账单项目
+
+        Args:
+            qwen_response: Qwen Vision 返回的原始文本
+            categories: 当前数据库中的全部分类，用于模糊匹配
+        """
         logger.info(f"[BillParser] Qwen 原始返回内容:\n{qwen_response}")
         try:
-            # 尝试 JSON 格式解析
-            return BillParser._parse_json_format(qwen_response)
+            return BillParser._parse_json_format(qwen_response, categories)
         except (json.JSONDecodeError, KeyError, ValueError):
-            # 如果 JSON 解析失败，尝试文本格式解析
             try:
-                return BillParser._parse_text_format(qwen_response)
+                return BillParser._parse_text_format(qwen_response, categories)
             except Exception as e:
-                logger.error(f"[BillParser] 文本格式解析也失败，原始内容已记录在上方")
+                logger.error("[BillParser] 文本格式解析也失败，原始内容已记录在上方")
                 raise ValidationError(f"Failed to parse bill data: {str(e)}")
 
     @staticmethod
-    def _parse_json_format(response: str) -> List[BillItem]:
+    def _parse_json_format(response: str, categories: Sequence[Category]) -> List[BillItem]:
         """解析 JSON 格式的响应"""
-        # 尝试提取 JSON 块
-        # 处理可能的 markdown 代码块格式
         json_match = re.search(r"```json\n(.*?)\n```", response, re.DOTALL)
         if json_match:
             json_str = json_match.group(1)
         elif response.strip().startswith("{"):
             json_str = response.strip()
         else:
-            # 尝试找到 JSON 对象
             json_match = re.search(r"\{.*\}", response, re.DOTALL)
             if not json_match:
                 raise ValueError("No JSON found in response")
@@ -50,7 +51,7 @@ class BillParser:
 
         items = []
         for item in data["items"]:
-            bill_item = BillParser._build_bill_item(item)
+            bill_item = BillParser._build_bill_item(item, categories)
             items.append(bill_item)
 
         if not items:
@@ -59,13 +60,10 @@ class BillParser:
         return items
 
     @staticmethod
-    def _parse_text_format(response: str) -> List[BillItem]:
+    def _parse_text_format(response: str, categories: Sequence[Category]) -> List[BillItem]:
         """解析文本格式的响应（备选方案）"""
         items = []
-
-        # 按行处理，查找包含金额和商户的行
         lines = response.split("\n")
-
         current_item = {}
 
         for line in lines:
@@ -73,32 +71,26 @@ class BillParser:
             if not line:
                 continue
 
-            # 尝试提取金额
             amount_match = re.search(r"[\¥$￥]?\s*(\d+\.?\d*)", line)
             if amount_match:
                 current_item["amount"] = float(amount_match.group(1))
 
-            # 尝试提取日期
             date_match = re.search(r"(\d{4}[-/]\d{1,2}[-/]\d{1,2}(?:\s+\d{1,2}:\d{1,2}(?::\d{1,2})?)?)", line)
             if date_match:
                 current_item["date"] = BillParser._normalize_date(date_match.group(1))
 
-            # 尝试提取商户名称（如果行中有中文或字母）
             if re.search(r"[一-鿿\w]", line):
                 if amount_match:
-                    # 金额前的内容视为商户名
                     merchant = line[: amount_match.start()].strip()
                     if merchant:
                         current_item["merchant_name"] = merchant
                 else:
-                    # 如果没有金额，整行视为商户名
                     if "merchant_name" not in current_item:
                         current_item["merchant_name"] = line
 
-            # 如果已经收集到足够信息，创建项目
             if all(k in current_item for k in ["merchant_name", "amount", "date"]):
-                current_item["category"] = "其他"  # 文本格式中无法确定分类
-                bill_item = BillParser._build_bill_item(current_item)
+                current_item["category"] = "其他"
+                bill_item = BillParser._build_bill_item(current_item, categories)
                 items.append(bill_item)
                 current_item = {}
 
@@ -108,9 +100,37 @@ class BillParser:
         return items
 
     @staticmethod
-    def _build_bill_item(item_dict: dict) -> BillItem:
+    def _resolve_category(name: Optional[str], categories: Sequence[Category]) -> Category:
+        """根据 LLM 返回的分类名做模糊匹配，返回 Category 实体。
+
+        匹配顺序：
+        1. 精确同名
+        2. 双向 substring 模糊匹配
+        3. 名为 "其他" 的兜底分类
+        4. 全部分类中 sort_order 最大者（"其他"被改名时的兜底）
+        """
+        if not categories:
+            raise ValidationError("No categories available; database not seeded")
+
+        clean = (name or "").strip()
+        if clean:
+            for c in categories:
+                if c.name == clean:
+                    return c
+            lower = clean.lower()
+            for c in categories:
+                cname = c.name.lower()
+                if cname in lower or lower in cname:
+                    return c
+
+        for c in categories:
+            if c.name == "其他":
+                return c
+        return max(categories, key=lambda c: (c.sort_order, c.id))
+
+    @staticmethod
+    def _build_bill_item(item_dict: dict, categories: Sequence[Category]) -> BillItem:
         """从字典构建 BillItem"""
-        # 提取必要字段
         merchant_name = item_dict.get("merchant_name", "").strip()
         if not merchant_name:
             raise ValueError("Missing merchant_name")
@@ -130,15 +150,15 @@ class BillParser:
             raise ValueError("Missing date")
         date_str = BillParser._normalize_date(date_str)
 
-        # 分类映射
-        category_str = item_dict.get("category", "其他").strip()
-        category_enum = BillCategory.from_name(category_str)
+        category_str = item_dict.get("category", "其他")
+        category = BillParser._resolve_category(category_str, categories)
 
         return BillItem(
             value=amount,
             name=merchant_name,
             date=date_str,
-            category=category_enum.value,
+            category_id=category.id,
+            category=CategoryBrief.model_validate(category),
         )
 
     @staticmethod
@@ -146,13 +166,9 @@ class BillParser:
         """规范化日期格式为 YYYY-MM-DD HH:MM:SS"""
         date_str = date_str.strip()
 
-        # 尝试各种常见日期格式
         patterns = [
-            # YYYY-MM-DD HH:MM:SS
             (r"(\d{4})[-/](\d{1,2})[-/](\d{1,2})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?", "%Y-%m-%d %H:%M:%S"),
-            # YYYY-MM-DD
             (r"(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?!\d)", "%Y-%m-%d 00:00:00"),
-            # MM-DD (假设当前年)
             (r"(?:^|\D)(\d{1,2})[-/](\d{1,2})(?!\d)", ""),
         ]
 
@@ -160,14 +176,12 @@ class BillParser:
             match = re.search(pattern, date_str)
             if match:
                 if format_str == "":
-                    # MM-DD 格式，需要补充年份
                     from datetime import datetime
 
                     month, day = int(match.group(1)), int(match.group(2))
                     year = datetime.now().year
                     return f"{year:04d}-{month:02d}-{day:02d} 00:00:00"
 
-                # 标准化月日和小时分秒
                 groups = match.groups()
                 year = int(groups[0])
                 month = int(groups[1])
@@ -182,5 +196,4 @@ class BillParser:
 
                 return f"{year:04d}-{month:02d}-{day:02d} {hour:02d}:{minute:02d}:{second:02d}"
 
-        # 如果无法识别日期格式，返回原始字符串
         raise ValueError(f"Unable to parse date: {date_str}")

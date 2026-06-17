@@ -51,6 +51,7 @@ htmlcov/
 # Logs
 *.log
 logs/
+.pids/
 
 # Project specific
 uploads/

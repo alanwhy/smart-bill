@@ -5,11 +5,11 @@
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-3 mb-2">
           <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-surface flex items-center justify-center">
-            <span class="text-lg">{{ getCategoryIcon(bill.category) }}</span>
+            <span class="text-lg">{{ bill.category?.icon || '📦' }}</span>
           </div>
           <div class="flex-1 min-w-0">
             <h3 class="text-sm font-semibold text-text truncate">{{ bill.merchant_name }}</h3>
-            <p class="text-xs text-text-muted">{{ formatCategory(bill.category) }}</p>
+            <p class="text-xs text-text-muted">{{ bill.category?.name || '其他' }}</p>
           </div>
         </div>
         <p class="text-xs text-text-muted">{{ formatDate(bill.transaction_date) }}</p>
@@ -48,7 +48,6 @@
 
 <script setup lang="ts">
 import type { BillRecord } from '@/types/bill'
-import { BILL_CATEGORIES } from '@/types/bill'
 import { format, parseISO } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 
@@ -60,16 +59,6 @@ defineEmits<{
   edit: []
   delete: []
 }>()
-
-const getCategoryIcon = (category: string): string => {
-  const cat = BILL_CATEGORIES.find((c) => c.value === category)
-  return cat?.icon || '📦'
-}
-
-const formatCategory = (category: string): string => {
-  const cat = BILL_CATEGORIES.find((c) => c.value === category)
-  return cat?.label || '其他'
-}
 
 const formatDate = (dateStr: string): string => {
   try {
