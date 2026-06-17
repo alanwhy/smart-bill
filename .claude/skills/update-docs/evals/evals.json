@@ -1,0 +1,41 @@
+{
+  "skill_name": "update-docs",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "更新文档",
+      "expected_output": "读取今日 git log，识别变更，更新 docs/CHANGELOG.md、docs/API.md、docs/ARCHITECTURE.md、README.md 和 CLAUDE.md，输出一张汇总表格",
+      "files": [],
+      "expectations": [
+        "运行了 git log 命令查看今日提交",
+        "读取了至少一个现有文档文件",
+        "更新了 docs/CHANGELOG.md",
+        "输出了汇总变更的表格"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "同步一下 API.md，刚加了几个认证接口",
+      "expected_output": "读取 backend/api/auth.py 实现，补全 API.md 中的认证端点文档（login、me、change-password），不修改其他文档",
+      "files": [],
+      "expectations": [
+        "读取了 backend/api/auth.py 或相关认证实现文件",
+        "读取了现有 docs/API.md",
+        "在 API.md 中新增或更新了认证相关端点",
+        "没有对无关文档做大量修改"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "刚完成了分类管理功能，CHANGELOG 里还写着待实现呢，帮我更新一下",
+      "expected_output": "读取分类管理相关实现（categories.py），将 CHANGELOG.md 中的「待实现」条目更新为已完成，追加新版本记录",
+      "files": [],
+      "expectations": [
+        "读取了 backend/api/categories.py 或相关分类实现",
+        "读取了 docs/CHANGELOG.md",
+        "在 CHANGELOG.md 中将分类功能标记为已完成或追加新版本",
+        "新版本号高于原版本（如从 0.1.0 升为 0.2.0）"
+      ]
+    }
+  ]
+}
