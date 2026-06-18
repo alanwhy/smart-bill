@@ -80,9 +80,13 @@ class BillParser:
             if not line:
                 continue
 
-            amount_match = re.search(r"[\¥$￥]?\s*(\d+\.?\d*)", line)
+            amount_match = re.search(r"[\¥$￥]?\s*(-?\d+\.?\d*)", line)
             if amount_match:
-                current_item["amount"] = float(amount_match.group(1))
+                amount_val = float(amount_match.group(1))
+                # 文本兜底分支无法可靠区分收支，缺省按支出（负数）处理
+                if amount_val > 0:
+                    amount_val = -amount_val
+                current_item["amount"] = amount_val
 
             date_match = re.search(r"(\d{4}[-/]\d{1,2}[-/]\d{1,2}(?:\s+\d{1,2}:\d{1,2}(?::\d{1,2})?)?)", line)
             if date_match:
@@ -149,8 +153,8 @@ class BillParser:
             raise ValueError("Missing amount")
         try:
             amount = float(amount)
-            if amount <= 0:
-                raise ValueError("Amount must be positive")
+            if amount == 0:
+                raise ValueError("Amount must not be zero")
         except (ValueError, TypeError):
             raise ValueError(f"Invalid amount: {amount}")
 

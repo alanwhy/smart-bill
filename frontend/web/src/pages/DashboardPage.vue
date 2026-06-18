@@ -9,6 +9,10 @@
             <p class="text-xs text-text-muted uppercase tracking-wider">{{ expenseLabel }}</p>
             <p class="text-2xl font-bold text-primary">¥{{ totalExpense.toFixed(2) }}</p>
           </div>
+          <div v-if="totalIncome > 0" class="flex flex-col">
+            <p class="text-xs text-text-muted uppercase tracking-wider">收入</p>
+            <p class="text-2xl font-bold text-success">+¥{{ totalIncome.toFixed(2) }}</p>
+          </div>
           <!-- 周期快捷按钮 -->
           <div class="flex gap-1 ml-2">
             <button
@@ -199,6 +203,7 @@ const cycleOffset = ref<0 | -1 | null>(0)
 
 const isLoading = computed(() => billsStore.isLoading)
 const totalExpense = computed(() => billsStore.totalExpense)
+const totalIncome = computed(() => billsStore.totalIncome)
 const isFilterSheetOpen = computed(() => uiStore.isFilterSheetOpen)
 
 const expenseLabel = computed(() => {

@@ -78,9 +78,12 @@ class UpdateCategoryRequest(BaseModel):
 
 
 class BillItem(BaseModel):
-    """账单项目（API 返回格式）"""
+    """账单项目（API 返回格式）
 
-    value: float = Field(..., description="消费金额（元）", gt=0)
+    value 约定：负数=支出，正数=收入，禁止为 0。
+    """
+
+    value: float = Field(..., description="金额（负数=支出，正数=收入）")
     name: str = Field(..., description="商户名称/描述", min_length=1)
     date: str = Field(..., description="消费日期时间（ISO 8601 格式）")
     category_id: int = Field(..., description="分类 ID")
@@ -89,7 +92,7 @@ class BillItem(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "value": 50.0,
+                "value": -50.0,
                 "name": "麦当劳",
                 "date": "2026-06-16 10:00:00",
                 "category_id": 1,
@@ -151,7 +154,7 @@ class CreateBillRequest(BaseModel):
     """手动创建账单请求模型"""
 
     user_id: int = Field(..., description="用户 ID", ge=1)
-    value: float = Field(..., description="消费金额", gt=0)
+    value: float = Field(..., description="金额（负数=支出，正数=收入）")
     merchant_name: str = Field(..., description="商户名称", min_length=1)
     transaction_date: str = Field(..., description="交易日期（ISO 8601）")
     category_id: int = Field(..., description="分类 ID", ge=1)
@@ -161,7 +164,7 @@ class CreateBillRequest(BaseModel):
         json_schema_extra = {
             "example": {
                 "user_id": 1,
-                "value": 50.0,
+                "value": -50.0,
                 "merchant_name": "麦当劳",
                 "transaction_date": "2026-06-18T12:00:00",
                 "category_id": 1,
@@ -173,7 +176,7 @@ class CreateBillRequest(BaseModel):
 class UpdateBillRequest(BaseModel):
     """修改账单请求模型"""
 
-    value: Optional[float] = Field(default=None, description="消费金额", gt=0)
+    value: Optional[float] = Field(default=None, description="金额（负数=支出，正数=收入）")
     merchant_name: Optional[str] = Field(default=None, description="商户名称", min_length=1)
     transaction_date: Optional[str] = Field(default=None, description="交易日期")
     category_id: Optional[int] = Field(default=None, description="分类 ID", ge=1)
@@ -182,7 +185,7 @@ class UpdateBillRequest(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "value": 55.0,
+                "value": -55.0,
                 "merchant_name": "麦当劳",
                 "transaction_date": "2026-06-16 10:00:00",
                 "category_id": 1,

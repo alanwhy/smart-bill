@@ -191,17 +191,27 @@ export const useBillsStore = defineStore('bills', () => {
     return grouped
   })
 
-  // 总消费
+  // 总支出（仅汇总 value < 0 的账单，取绝对值；展示为正数）
   const totalExpense = computed(() => {
-    return bills.value.filter((b) => !b.isPlaceholder).reduce((sum, bill) => sum + bill.value, 0)
+    return bills.value
+      .filter((b) => !b.isPlaceholder && b.value < 0)
+      .reduce((sum, bill) => sum + Math.abs(bill.value), 0)
   })
 
-  // 分类统计（按 category_id）
+  // 总收入（仅汇总 value > 0 的账单）
+  const totalIncome = computed(() => {
+    return bills.value
+      .filter((b) => !b.isPlaceholder && b.value > 0)
+      .reduce((sum, bill) => sum + bill.value, 0)
+  })
+
+  // 分类统计（按 category_id，金额取绝对值方便饼图展示）
   const expenseByCategory = computed(() => {
     const result: Record<number, number> = {}
     bills.value.forEach((bill) => {
       if (bill.isPlaceholder) return
-      result[bill.category_id] = (result[bill.category_id] || 0) + bill.value
+      if (bill.value >= 0) return
+      result[bill.category_id] = (result[bill.category_id] || 0) + Math.abs(bill.value)
     })
     return result
   })
@@ -221,6 +231,7 @@ export const useBillsStore = defineStore('bills', () => {
     stopPolling,
     billsByCategory,
     totalExpense,
+    totalIncome,
     expenseByCategory,
   }
 })

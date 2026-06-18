@@ -45,7 +45,12 @@
       <!-- 右侧操作 -->
       <div class="flex items-center gap-2 ml-4">
         <div class="text-right mr-2">
-          <p class="text-base font-bold text-primary">¥{{ bill.value.toFixed(2) }}</p>
+          <p
+            class="text-base font-bold"
+            :class="bill.value >= 0 ? 'text-success' : 'text-primary'"
+          >
+            {{ bill.value >= 0 ? '+' : '-' }}¥{{ Math.abs(bill.value).toFixed(2) }}
+          </p>
         </div>
 
         <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1">

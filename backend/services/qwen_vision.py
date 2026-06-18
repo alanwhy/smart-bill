@@ -2,21 +2,22 @@
 
 import base64
 import os
-from typing import Optional
+from typing import Iterable, Optional
 
 import dashscope
 from dashscope import MultiModalConversation
 
 from backend.config import settings
 from backend.core.exceptions import FileError, QwenAPIError, ValidationError
-from backend.services.prompts import BILL_RECOGNITION_SYSTEM_PROMPT, BILL_RECOGNITION_USER_PROMPT
+from backend.services.prompts import (
+    BILL_RECOGNITION_USER_PROMPT,
+    build_bill_recognition_system_prompt,
+)
 from backend.utils import qwen_logger as _log
 
 
 class QwenVisionService:
     """Qwen3-VL-Plus 服务封装"""
-
-    SYSTEM_PROMPT = BILL_RECOGNITION_SYSTEM_PROMPT
 
     def __init__(self):
         """初始化 Qwen 服务"""
@@ -49,8 +50,14 @@ class QwenVisionService:
         with open(image_path, "rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
 
-    def call_qwen_vision(self, image_path: str) -> str:
-        """调用 Qwen3-VL-Plus 识别账单"""
+    def call_qwen_vision(self, image_path: str, categories: Iterable = ()) -> str:
+        """调用 Qwen3-VL-Plus 识别账单
+
+        Args:
+            image_path: 待识别的图片路径
+            categories: 当前数据库中可用的分类列表，会注入到 system prompt 中。
+                传空时仍会生成 prompt（仅含「其他」），但强烈建议传入实际分类。
+        """
         try:
             # 验证图片
             self.validate_image(image_path)
@@ -62,13 +69,16 @@ class QwenVisionService:
             # 编码图片为 base64
             image_base64 = self._encode_image_to_base64(image_path)
 
+            # 动态构建 system prompt（注入用户当前分类 + 今日日期）
+            system_prompt = build_bill_recognition_system_prompt(categories)
+
             # 调用 Qwen API
             response = MultiModalConversation.call(
                 model=settings.qwen_model,
                 messages=[
                     {
                         "role": "system",
-                        "content": self.SYSTEM_PROMPT,
+                        "content": system_prompt,
                     },
                     {
                         "role": "user",

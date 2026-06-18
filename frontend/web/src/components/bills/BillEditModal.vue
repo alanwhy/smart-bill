@@ -17,11 +17,42 @@
 
       <!-- 内容 -->
       <div class="p-6 space-y-4">
+        <!-- 收支类型 -->
+        <div>
+          <label class="block text-sm font-medium text-text mb-2">类型</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              @click="formData.type = 'expense'"
+              :class="[
+                'py-2 rounded-lg border-2 text-sm font-medium transition-all duration-200',
+                formData.type === 'expense'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-surface text-text-secondary hover:border-primary/50',
+              ]"
+            >
+              支出
+            </button>
+            <button
+              type="button"
+              @click="formData.type = 'income'"
+              :class="[
+                'py-2 rounded-lg border-2 text-sm font-medium transition-all duration-200',
+                formData.type === 'income'
+                  ? 'border-success bg-success/10 text-success'
+                  : 'border-border bg-surface text-text-secondary hover:border-success/50',
+              ]"
+            >
+              收入
+            </button>
+          </div>
+        </div>
+
         <!-- 金额 -->
         <div>
           <label class="block text-sm font-medium text-text mb-2">金额</label>
           <input
-            v-model.number="formData.value"
+            v-model.number="formData.amount"
             type="number"
             step="0.01"
             min="0"
@@ -157,7 +188,8 @@ function convertToDatetimeLocal(dateStr: string): string {
 }
 
 const formData = reactive({
-  value: props.bill?.value ?? 0,
+  type: (props.bill && props.bill.value > 0 ? 'income' : 'expense') as 'expense' | 'income',
+  amount: props.bill ? Math.abs(props.bill.value) : 0,
   merchant_name: props.bill?.merchant_name ?? '',
   category_id: props.bill?.category_id ?? 0,
   transaction_date: props.bill
@@ -178,7 +210,7 @@ const handleSubmit = async () => {
     return
   }
 
-  if (formData.value <= 0) {
+  if (!formData.amount || formData.amount <= 0) {
     errorMessage.value = '金额必须大于 0'
     return
   }
@@ -188,13 +220,17 @@ const handleSubmit = async () => {
     return
   }
 
+  // 根据收支类型决定提交时的正负号
+  const signedValue =
+    formData.type === 'expense' ? -Math.abs(formData.amount) : Math.abs(formData.amount)
+
   isSubmitting.value = true
 
   try {
     if (props.mode === 'create') {
       await billsStore.createBill({
         user_id: authStore.userId!,
-        value: formData.value,
+        value: signedValue,
         merchant_name: formData.merchant_name,
         category_id: formData.category_id,
         transaction_date: new Date(formData.transaction_date).toISOString(),
@@ -202,7 +238,7 @@ const handleSubmit = async () => {
       })
     } else {
       await billsStore.updateBill(props.bill!.id, {
-        value: formData.value,
+        value: signedValue,
         merchant_name: formData.merchant_name,
         category_id: formData.category_id,
         transaction_date: new Date(formData.transaction_date).toISOString(),

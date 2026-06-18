@@ -45,11 +45,13 @@ class BillProcessor:
             # Step 1: 验证文件
             validate_image_file(file_path)
 
-            # Step 2: 调用 Qwen 识别（直接使用传入的 file_path，无需二次复制）
-            qwen_response = self._get_qwen_service().call_qwen_vision(file_path)
-
-            # Step 4: 加载分类用于模糊匹配，再解析响应
+            # Step 2: 加载分类（一次查询同时用于 prompt 注入和后续模糊匹配）
             categories = crud.list_categories(db)
+
+            # Step 3: 调用 Qwen 识别（把当前分类列表注入 system prompt）
+            qwen_response = self._get_qwen_service().call_qwen_vision(file_path, categories)
+
+            # Step 4: 解析响应
             bill_items = self.bill_parser.parse_qwen_output(qwen_response, categories)
 
             # Step 5: 保存到数据库
