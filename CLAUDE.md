@@ -20,13 +20,14 @@ bash scripts/restart.sh
 make install && make dev          # 后端
 cd frontend/web && npm run dev    # 前端（新终端）
 
-# 生产部署
-cp .env.production .env && vi .env   # 填入真实密钥
+# 生产部署（需提前 export 生产密钥）
+export QWEN_API_KEY_PROD=your-prod-key
+export SECRET_KEY_PROD=$(openssl rand -hex 32)
 bash scripts/deploy.sh --init        # 首次初始化服务器
 bash scripts/deploy.sh               # 日常更新部署
 ```
 
-**环境变量**（`.env`）：`QWEN_API_KEY`、`SECRET_KEY`、`DATABASE_URL`、`CORS_ORIGINS` — 参考 `docs/SETUP.md`
+**环境变量**（`.env`）：本地开发用，`cp .env.example .env` 后填入 `QWEN_API_KEY`、`SECRET_KEY` — 参考 `docs/SETUP.md`。部署时生产密钥通过 shell 环境变量 `QWEN_API_KEY_PROD` / `SECRET_KEY_PROD` 传入，不依赖本地 `.env`。
 
 ## 关键约定
 

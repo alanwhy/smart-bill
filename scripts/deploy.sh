@@ -15,7 +15,11 @@ SERVER_PORT="22"
 SSH_KEY="$HOME/.ssh/smart_bill_deploy"
 REMOTE_DIR="/opt/smart-bill"
 COMPOSE_FILE="docker/docker-compose.yml"
-ENV_FILE=".env"           # 本地 .env 文件（填好真实值后使用）
+# 生产密钥从本机 shell 环境变量读取，不依赖本地 .env 文件
+# 部署前请先执行：
+#   export QWEN_API_KEY_PROD=your-production-key
+#   export SECRET_KEY_PROD=your-production-secret-key
+TMP_ENV_FILE="/tmp/smart_bill_deploy_$(date +%s).env"
 
 # ---- 颜色输出 ----
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
@@ -30,12 +34,25 @@ scp_cmd() { scp $SSHOPTS -P "$SERVER_PORT" "$@"; }
 
 # ---- 前置检查 ----
 [[ -f "$SSH_KEY" ]] || error "SSH 私钥不存在：$SSH_KEY\n  请先运行：ssh-keygen -t ed25519 -f $SSH_KEY"
-[[ -f "$ENV_FILE" ]] || error ".env 文件不存在。\n  请复制 .env.production 为 .env 并填入真实值：\n  cp .env.production .env && vi .env"
 
-grep -q "your_qwen_api_key_here" "$ENV_FILE" && \
-  error ".env 中 QWEN_API_KEY 仍为占位符，请填入真实值后再部署"
-grep -q "your_secret_key_here" "$ENV_FILE" && \
-  error ".env 中 SECRET_KEY 仍为占位符，请运行：openssl rand -hex 32"
+# 检查生产密钥环境变量
+[[ -z "${QWEN_API_KEY_PROD:-}" ]] && \
+  error "未设置生产密钥环境变量 QWEN_API_KEY_PROD\n  请先运行：export QWEN_API_KEY_PROD=your-production-key"
+[[ -z "${SECRET_KEY_PROD:-}" ]] && \
+  error "未设置生产密钥环境变量 SECRET_KEY_PROD\n  请先运行：export SECRET_KEY_PROD=\$(openssl rand -hex 32)"
+
+# 生成临时生产 .env（部署完成后自动删除）
+cat > "$TMP_ENV_FILE" <<EOF
+# 由 deploy.sh 自动生成，勿手动编辑
+QWEN_API_KEY=${QWEN_API_KEY_PROD}
+SECRET_KEY=${SECRET_KEY_PROD}
+LOG_LEVEL=${LOG_LEVEL_PROD:-INFO}
+HOST=0.0.0.0
+PORT=8000
+DATABASE_URL=sqlite:////app/data/smart_bill.db
+CORS_ORIGINS=${CORS_ORIGINS_PROD:-["http://localhost:5173","http://123.56.219.4:19283"]}
+EOF
+info "已生成临时生产 .env"
 
 # =========================================================
 # --init：首次服务器初始化（仅需执行一次）
@@ -77,7 +94,7 @@ info "同步代码到服务器..."
 rsync -az --delete \
   --exclude='.git' \
   --exclude='.env' \
-  --exclude='.env.production' \
+  --exclude='.env.*' \
   --exclude='*.db' \
   --exclude='__pycache__' \
   --exclude='.venv' \
@@ -87,9 +104,11 @@ rsync -az --delete \
   -e "ssh $SSHOPTS -p $SERVER_PORT" \
   ./ "${SERVER_USER}@${SERVER_IP}:${REMOTE_DIR}/"
 
-# Step 2：上传 .env
-info "上传 .env 文件..."
-scp_cmd "$ENV_FILE" "${SERVER_USER}@${SERVER_IP}:${REMOTE_DIR}/.env"
+# Step 2：上传生产 .env（临时文件，上传后立即删除）
+info "上传生产 .env 文件..."
+scp_cmd "$TMP_ENV_FILE" "${SERVER_USER}@${SERVER_IP}:${REMOTE_DIR}/.env"
+rm -f "$TMP_ENV_FILE"
+info "临时 .env 文件已清除"
 
 # Step 3：构建并启动容器
 info "构建 Docker 镜像并启动容器..."

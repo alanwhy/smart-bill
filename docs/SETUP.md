@@ -37,14 +37,21 @@ uv sync
 ### 3. 配置环境变量
 ```bash
 cp .env.example .env
-# 编辑 .env 文件，填入 QWEN_API_KEY
+# 编辑 .env，填入 QWEN_API_KEY 和 SECRET_KEY
+vi .env
 ```
 
-获取 QWEN_API_KEY：
-1. 访问 https://dashscope.aliyun.com/
-2. 创建或选择项目
-3. 在 API-KEY 管理中创建密钥
-4. 复制密钥到 .env 文件
+**必填项：**
+- `QWEN_API_KEY`：阿里云 DashScope API 密钥
+  1. 访问 https://dashscope.aliyun.com/
+  2. 在 API-KEY 管理中创建密钥
+  3. 复制密钥到 `.env`
+- `SECRET_KEY`：JWT 签名密钥
+  ```bash
+  openssl rand -hex 32  # 生成随机密钥，填入 .env
+  ```
+
+> **注意**：`.env` 已被 `.gitignore` 忽略，不会提交到 Git。`.env.example` 是字段说明模板，可以安全提交。
 
 ### 4. 启动开发服务器
 ```bash
@@ -77,6 +84,34 @@ make format
 # 清理临时文件
 make clean
 ```
+
+## 生产部署
+
+### 前置：设置生产密钥环境变量
+
+部署脚本从本机 shell 环境变量读取生产密钥，**不会把本地开发密钥上传到服务器**：
+
+```bash
+# 在你的 shell 配置文件（~/.zshrc 或 ~/.bashrc）中添加，或每次部署前手动 export
+export QWEN_API_KEY_PROD=your-production-dashscope-key
+export SECRET_KEY_PROD=$(openssl rand -hex 32)  # 首次生成后保存好
+```
+
+然后执行部署：
+```bash
+bash scripts/deploy.sh --init  # 首次初始化服务器
+bash scripts/deploy.sh         # 日常更新部署
+```
+
+脚本会自动：
+1. 验证生产密钥环境变量已设置
+2. 在内存中生成临时 `.env`（含生产密钥）
+3. 通过 scp 上传到服务器
+4. **立即删除**本机临时文件
+
+可选的生产环境变量：
+- `LOG_LEVEL_PROD`：默认 `INFO`
+- `CORS_ORIGINS_PROD`：默认包含生产服务器地址
 
 ## 调试
 
