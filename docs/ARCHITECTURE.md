@@ -61,7 +61,6 @@ BillRecord(
   category_id: int,           # 外键关联 categories.id
   category: CategoryBrief,    # lazy="joined" 自动加载
   description: str | None,    # 账单备注（max 100 字）
-  image_path: str | None,     # 识别图片路径（手动创建时为 null）
   created_at: datetime,
   updated_at: datetime
 )
@@ -179,7 +178,12 @@ smart-bill/
 │       ├── package.json
 │       └── vite.config.ts   # Vite 配置（含后端代理）
 ├── scripts/
-│   └── restart.sh           # 一键重启前后端脚本
+│   ├── restart.sh           # 一键重启前后端脚本（开发环境）
+│   └── deploy.sh            # 一键生产部署脚本（支持 --init 首次初始化）
+├── docker/
+│   ├── Dockerfile
+│   └── docker-compose.yml   # 生产容器编排（端口 19283）
+├── .env.production          # 生产环境变量模板
 └── docs/
     ├── API.md
     ├── ARCHITECTURE.md

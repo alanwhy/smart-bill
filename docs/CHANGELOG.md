@@ -1,5 +1,30 @@
 # 更新日志
 
+## [0.4.0] - 2026-06-18
+
+### 已实现
+
+- [x] Phase 17：生产环境部署
+  - **一键部署脚本** `scripts/deploy.sh`：支持 `--init`（首次初始化服务器）和日常更新部署两种模式
+  - **生产环境变量模板** `.env.production`：含 `QWEN_API_KEY`、`SECRET_KEY`、`CORS_ORIGINS` 等配置项
+  - **前端远程环境配置** `frontend/web/.env.remote`：生产环境 API 地址设置
+  - **Docker Compose 优化**：端口改为 19283:8000，持久化数据卷（`smart-bill-data`），healthcheck 配置
+  - **Dockerfile 优化**：构建流程精简
+  - `frontend/web/package.json` 新增 `build:remote` 脚本，`vite.config.ts` 支持多环境代理
+
+- [x] Phase 18：UI 精细化优化
+  - **模态框动效**：BillUploadModal、BillEditModal、ConfirmDialog 添加淡入/滑入过渡动画
+  - **全局样式扩展** `main.css`：大量 Tailwind 自定义组件类（`.modal-overlay`、`.card-hover`、`.btn-*` 等）
+  - **DashboardPage**、**LoginPage** 细节样式调整
+
+- [x] 数据模型简化
+  - 移除 `BillRecord.image_path` 字段（数据库、`crud.py`、`bill_processor.py`、Pydantic 模型及前端 `bill.ts` 全链路清理）
+  - 账单不再存储图片路径，简化数据结构
+
+_last commit: `528065773467cf436c258a9134c1de787aaeaa70`_
+
+---
+
 ## [0.3.0] - 2026-06-18
 
 ### 已实现

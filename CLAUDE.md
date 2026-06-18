@@ -13,12 +13,17 @@ Qwen3-VL-Plus 智能账单识别服务，供 2 人（用户和媳妇）在本地
 ## 快速启动
 
 ```bash
-# 一键重启前后端
+# 一键重启前后端（开发环境）
 bash scripts/restart.sh
 
 # 分步启动
 make install && make dev          # 后端
 cd frontend/web && npm run dev    # 前端（新终端）
+
+# 生产部署
+cp .env.production .env && vi .env   # 填入真实密钥
+bash scripts/deploy.sh --init        # 首次初始化服务器
+bash scripts/deploy.sh               # 日常更新部署
 ```
 
 **环境变量**（`.env`）：`QWEN_API_KEY`、`SECRET_KEY`、`DATABASE_URL`、`CORS_ORIGINS` — 参考 `docs/SETUP.md`
@@ -63,13 +68,11 @@ frontend/web/src/stores/         # auth / bills / categories / ui
 - [ ] 认证中间件强制校验所有账单端点（当前 user_id 由前端传入）
 - [ ] 账单统计分析与趋势图表
 - [ ] 报表导出（PDF/Excel）
-- [ ] Docker 镜像优化 + NAS 部署指南
-- [ ] 本地图片存储规范化 + 定时备份
+- [ ] 定时备份脚本
 
 ## 已知限制
 
 - `user_id` 未经后端强制校验（安全隐患）
-- 图片存储在系统 temp 目录（临时方案）
 - 无用户注册（仅预设账户）
 - SQLite 不适合高并发（小规模无影响）
 

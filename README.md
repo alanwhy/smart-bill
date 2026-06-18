@@ -31,7 +31,7 @@
 - Node.js 18+
 - uv（Python 包管理工具）
 
-### 安装与启动
+### 安装与启动（本地开发）
 
 **方式一：一键启动（推荐）**
 
@@ -56,6 +56,20 @@ npm install
 npm run dev
 # 访问 http://localhost:5173
 ```
+
+### 生产环境部署（服务器 / NAS）
+
+```bash
+# 首次初始化服务器（仅需执行一次）
+cp .env.production .env
+# 编辑 .env，填入真实的 QWEN_API_KEY 和 SECRET_KEY
+bash scripts/deploy.sh --init
+
+# 日常更新部署
+bash scripts/deploy.sh
+```
+
+> 部署脚本会自动构建前端、上传文件、重启 Docker 容器，服务监听端口 `19283`。
 
 ### 访问地址
 
@@ -83,8 +97,10 @@ smart-bill/
 │       ├── stores/   # Pinia 状态（auth, bills, categories）
 │       ├── utils/    # 工具（cycle.ts 周期日期计算）
 │       └── api/      # axios 请求封装
+├── docker/           # Docker 配置（生产环境）
 ├── scripts/
-│   └── restart.sh    # 一键重启脚本
+│   ├── restart.sh    # 一键重启（开发环境）
+│   └── deploy.sh     # 一键部署（生产环境）
 └── docs/             # 文档
 ```
 
@@ -105,7 +121,6 @@ smart-bill/
 
 - [ ] 账单统计分析与趋势图表
 - [ ] 报表导出（PDF/Excel）
-- [ ] Docker NAS 部署优化
 - [ ] 定时备份脚本
 - [ ] 认证中间件强制校验所有账单端点
 

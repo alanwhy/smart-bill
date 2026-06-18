@@ -136,7 +136,6 @@ Response:
     "category_id": 1,
     "category": {"id": 1, "name": "餐饮", "icon": "🍽️", "color": "#F97316"},
     "description": "午饭",
-    "image_path": null,
     "created_at": "2026-06-18T12:00:00",
     "updated_at": "2026-06-18T12:00:00"
   }
@@ -168,7 +167,6 @@ Response:
       "category_id": 1,
       "category": {"id": 1, "name": "餐饮", "icon": "🍽️", "color": "#F97316"},
       "description": null,
-      "image_path": "/tmp/xxx.jpg",
       "created_at": "2026-06-18T10:00:00",
       "updated_at": "2026-06-18T10:00:00"
     }
@@ -201,7 +199,6 @@ Response:
       "category_id": 1,
       "category": {"id": 1, "name": "餐饮", "icon": "🍽️", "color": "#F97316"},
       "description": "工作午餐",
-      "image_path": null,
       "created_at": "2026-06-16T10:00:00",
       "updated_at": "2026-06-16T10:00:00"
     }

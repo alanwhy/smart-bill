@@ -26,21 +26,31 @@ updating all relevant docs files to match the current state of the project.
 
 ### 1. Discover what changed
 
-First, read `docs/CHANGELOG.md` to find the date of the last documented version
-(e.g., `## [0.2.0] - 2026-06-17`). Then fetch all commits after that date:
+First, read `docs/CHANGELOG.md` to find the **last recorded commit hash** in the most
+recent version block. Each version block ends with a line like:
 
-```bash
-# Extract last documented date from CHANGELOG.md, then get commits since then
-git log --after="<last-changelog-date>" --format="%H %ai %s"
+```
+_last commit: `a1b2c3d`_
 ```
 
-If CHANGELOG.md has no date (first run), fall back to all commits:
+Then fetch all commits **after** that hash:
+
+```bash
+# Get all commits after the last recorded hash (exclusive)
+git log <last-commit-hash>..HEAD --format="%H %ai %s"
+```
+
+If CHANGELOG.md has no recorded commit hash (first run), fall back to all commits:
 ```bash
 git log --oneline
 ```
 
 For each commit hash, run `git show --stat <hash>` to understand what files changed.
 Group commits by feature/theme to determine which doc sections need updating.
+
+> **Why hash instead of date?** Commit timestamps can be ambiguous (timezone drift,
+> amended commits, rebases). A hash is an exact, unambiguous pointer — you get precisely
+> the commits since the last doc update, nothing more and nothing less.
 
 ### 2. Read current docs
 
@@ -70,6 +80,12 @@ This ensures docs reflect what was actually built, not just commit messages.
 - Group changes by phase/feature
 - Mark previously "待实现" items as completed
 - Keep the old version's content below unchanged
+- **At the end of the new version block, record the hash of the most recent commit
+  covered by this update**, so the next run knows exactly where to start:
+  ```
+  _last commit: `<full-hash-of-HEAD>`_
+  ```
+  Run `git rev-parse HEAD` to get the current HEAD hash.
 
 #### API.md
 - Add complete documentation for new endpoints with request/response examples
@@ -119,8 +135,11 @@ Report a summary table like:
 
 ## Tips
 
-- If the user specifies a date range ("更新今天的文档" / "同步上周的改动"), adjust the git log query accordingly.
+- If the user specifies a commit range (e.g., "从上次发版到现在"), use `git log <tag-or-hash>..HEAD` directly.
 - If only specific docs need updating (e.g., "只更新 API.md"), skip the others.
 - Prefer `Edit` over `Write` for partial updates; use `Write` only for complete rewrites.
 - When in doubt whether a feature is "完成", read the implementation file rather than guessing from the commit message.
 - Don't remove history from CHANGELOG.md — always prepend new versions, never replace old ones.
+- If the recorded hash in CHANGELOG.md no longer exists in the repo (e.g., after a
+  force-push or rebase), fall back to `git log --oneline` and ask the user which
+  commit to treat as the baseline.
