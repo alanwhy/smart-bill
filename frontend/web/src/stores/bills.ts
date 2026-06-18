@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { billApi } from '@/api/bills'
-import type { BillRecord, BillFilter } from '@/types/bill'
+import type { BillRecord, BillFilter, CreateBillRequest } from '@/types/bill'
 
 export const useBillsStore = defineStore('bills', () => {
   const bills = ref<BillRecord[]>([])
@@ -146,9 +146,25 @@ export const useBillsStore = defineStore('bills', () => {
     }
   }
 
-  // 删除账单
-  const deleteBill = async (billId: number) => {
+  // 手动创建账单
+  const createBill = async (data: CreateBillRequest) => {
     isLoading.value = true
+    error.value = null
+
+    try {
+      const newBill = await billApi.createBill(data)
+      bills.value = [newBill, ...bills.value]
+      return newBill
+    } catch (e) {
+      error.value = (e as Error).message
+      throw e
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // 删除账单
+  const deleteBill = async (billId: number) => {    isLoading.value = true
     error.value = null
 
     try {
@@ -196,6 +212,7 @@ export const useBillsStore = defineStore('bills', () => {
     error,
     fetchBills,
     uploadBills,
+    createBill,
     updateBill,
     deleteBill,
     addPlaceholders,

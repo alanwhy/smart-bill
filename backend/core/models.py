@@ -147,6 +147,29 @@ class UploadRequest(BaseModel):
         json_schema_extra = {"example": {"user_id": 1}}
 
 
+class CreateBillRequest(BaseModel):
+    """手动创建账单请求模型"""
+
+    user_id: int = Field(..., description="用户 ID", ge=1)
+    value: float = Field(..., description="消费金额", gt=0)
+    merchant_name: str = Field(..., description="商户名称", min_length=1)
+    transaction_date: str = Field(..., description="交易日期（ISO 8601）")
+    category_id: int = Field(..., description="分类 ID", ge=1)
+    description: Optional[str] = Field(default=None, description="账单备注", max_length=100)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": 1,
+                "value": 50.0,
+                "merchant_name": "麦当劳",
+                "transaction_date": "2026-06-18T12:00:00",
+                "category_id": 1,
+                "description": "午饭",
+            }
+        }
+
+
 class UpdateBillRequest(BaseModel):
     """修改账单请求模型"""
 

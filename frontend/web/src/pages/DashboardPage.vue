@@ -48,6 +48,15 @@
             <span>筛选</span>
           </button>
           <button
+            @click="showCreateModal = true"
+            class="btn btn-secondary btn-sm"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            <span>录入</span>
+          </button>
+          <button
             @click="showUploadModal = true"
             class="btn btn-primary btn-sm"
           >
@@ -125,6 +134,14 @@
       @success="onUploadSuccess"
     />
 
+    <!-- 手动录入模态框 -->
+    <BillEditModal
+      v-if="showCreateModal"
+      mode="create"
+      @close="showCreateModal = false"
+      @update="onBillCreated"
+    />
+
     <!-- 编辑模态框 -->
     <BillEditModal
       v-if="editingBill"
@@ -172,6 +189,7 @@ const uiStore = useUiStore()
 const authStore = useAuthStore()
 
 const showUploadModal = ref(false)
+const showCreateModal = ref(false)
 const editingBill = ref<BillRecord | null>(null)
 const deletingBillId = ref<number | null>(null)
 const toastMessage = ref<string | null>(null)
@@ -246,6 +264,10 @@ const onUploadSuccess = (fileCount: number) => {
   showUploadModal.value = false
   billsStore.addPlaceholders(fileCount)
   billsStore.startPolling(authStore.userId!, fileCount, uiStore.filters)
+}
+
+const onBillCreated = () => {
+  showCreateModal.value = false
 }
 
 const onBillUpdated = () => {

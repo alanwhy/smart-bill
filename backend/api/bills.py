@@ -8,7 +8,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from sqlalchemy.orm import Session
 
-from backend.core import BillRecordInDB, BillResponse, UpdateBillRequest
+from backend.core import BillRecordInDB, BillResponse, CreateBillRequest, UpdateBillRequest
 from backend.database import crud, get_db
 from backend.database.db import SessionLocal
 from backend.services import BillProcessor
@@ -35,6 +35,29 @@ def _process_single_bill(tmp_path: str, filename: str, user_id: int) -> list:
                 os.remove(tmp_path)
             except Exception:
                 pass
+
+
+@router.post("", response_model=BillResponse)
+def create_bill_manual(
+    request: CreateBillRequest,
+    db: Session = Depends(get_db),
+) -> BillResponse:
+    """手动创建账单"""
+    try:
+        bill = crud.create_bill(
+            db,
+            user_id=request.user_id,
+            merchant_name=request.merchant_name,
+            value=request.value,
+            transaction_date=request.transaction_date,
+            category_id=request.category_id,
+            description=request.description,
+        )
+        return BillResponse(code=0, msg="success", data=BillRecordInDB.model_validate(bill))
+
+    except Exception as e:
+        logger.error(f"Error creating bill manually: {str(e)}")
+        return BillResponse(code=getattr(e, "code", 500), msg="error", data={"error": str(e)})
 
 
 @router.post("/upload", response_model=BillResponse)

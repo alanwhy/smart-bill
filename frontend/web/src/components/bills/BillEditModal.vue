@@ -4,7 +4,7 @@
     <div class="bg-surface rounded-2xl shadow-xl w-full max-w-lg">
       <!-- 头部 -->
       <div class="border-b border-border px-6 py-4 flex items-center justify-between">
-        <h2 class="text-xl font-bold text-text">编辑账单</h2>
+        <h2 class="text-xl font-bold text-text">{{ mode === 'create' ? '手动录入账单' : '编辑账单' }}</h2>
         <button
           @click="emit('close')"
           class="p-2 hover:bg-border rounded-lg transition-colors duration-200"
@@ -106,7 +106,7 @@
           :disabled="isSubmitting"
           class="btn btn-primary"
         >
-          {{ isSubmitting ? '保存中...' : '保存修改' }}
+          {{ isSubmitting ? '保存中...' : (mode === 'create' ? '保存' : '保存修改') }}
         </button>
       </div>
     </div>
@@ -117,12 +117,17 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useCategoriesStore } from '@/stores/categories'
+import { useAuthStore } from '@/stores/auth'
 import type { BillRecord } from '@/types/bill'
 import { format, parseISO } from 'date-fns'
 
-const props = defineProps<{
-  bill: BillRecord
-}>()
+const props = withDefaults(
+  defineProps<{
+    bill?: BillRecord
+    mode?: 'create' | 'edit'
+  }>(),
+  { mode: 'edit' },
+)
 
 const emit = defineEmits<{
   close: []
@@ -131,23 +136,16 @@ const emit = defineEmits<{
 
 const billsStore = useBillsStore()
 const categoriesStore = useCategoriesStore()
+const authStore = useAuthStore()
 
 const categories = computed(() => categoriesStore.sortedCategories)
 
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
-const formData = reactive({
-  value: props.bill.value,
-  merchant_name: props.bill.merchant_name,
-  category_id: props.bill.category_id,
-  transaction_date: convertToDatetimeLocal(props.bill.transaction_date),
-  description: props.bill.description || '',
-})
-
-onMounted(() => {
-  categoriesStore.getOrFetch()
-})
+function todayDatetimeLocal(): string {
+  return format(new Date(), "yyyy-MM-dd'T'HH:mm")
+}
 
 function convertToDatetimeLocal(dateStr: string): string {
   try {
@@ -157,6 +155,20 @@ function convertToDatetimeLocal(dateStr: string): string {
     return dateStr
   }
 }
+
+const formData = reactive({
+  value: props.bill?.value ?? 0,
+  merchant_name: props.bill?.merchant_name ?? '',
+  category_id: props.bill?.category_id ?? 0,
+  transaction_date: props.bill
+    ? convertToDatetimeLocal(props.bill.transaction_date)
+    : todayDatetimeLocal(),
+  description: props.bill?.description ?? '',
+})
+
+onMounted(() => {
+  categoriesStore.getOrFetch()
+})
 
 const handleSubmit = async () => {
   errorMessage.value = ''
@@ -179,13 +191,24 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    await billsStore.updateBill(props.bill.id, {
-      value: formData.value,
-      merchant_name: formData.merchant_name,
-      category_id: formData.category_id,
-      transaction_date: new Date(formData.transaction_date).toISOString(),
-      description: formData.description || undefined,
-    })
+    if (props.mode === 'create') {
+      await billsStore.createBill({
+        user_id: authStore.userId!,
+        value: formData.value,
+        merchant_name: formData.merchant_name,
+        category_id: formData.category_id,
+        transaction_date: new Date(formData.transaction_date).toISOString(),
+        description: formData.description || undefined,
+      })
+    } else {
+      await billsStore.updateBill(props.bill!.id, {
+        value: formData.value,
+        merchant_name: formData.merchant_name,
+        category_id: formData.category_id,
+        transaction_date: new Date(formData.transaction_date).toISOString(),
+        description: formData.description || undefined,
+      })
+    }
 
     emit('update')
   } catch (e) {

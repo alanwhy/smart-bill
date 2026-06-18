@@ -56,6 +56,15 @@ export interface UpdateBillRequest {
   description?: string
 }
 
+export interface CreateBillRequest {
+  user_id: number
+  value: number
+  merchant_name: string
+  transaction_date: string
+  category_id: number
+  description?: string
+}
+
 export interface ApiResponse<T = any> {
   code: number
   msg: string

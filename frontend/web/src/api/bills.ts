@@ -1,5 +1,5 @@
 import client from './client'
-import type { BillItem, BillRecord, UpdateBillRequest } from '@/types/bill'
+import type { BillItem, BillRecord, CreateBillRequest, UpdateBillRequest } from '@/types/bill'
 
 export const billApi = {
   /**
@@ -48,6 +48,14 @@ export const billApi = {
    */
   async getBill(billId: number): Promise<BillRecord> {
     const response = await client.get(`/bills/${billId}`)
+    return response
+  },
+
+  /**
+   * 手动创建账单
+   */
+  async createBill(data: CreateBillRequest): Promise<BillRecord> {
+    const response = await client.post('/bills', data)
     return response
   },
 
