@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     class Config:
         case_sensitive = False
         env_file = ".env"
+        extra = "ignore"
 
 
 # 全局设置实例

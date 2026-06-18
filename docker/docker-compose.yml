@@ -7,16 +7,18 @@ services:
       dockerfile: docker/Dockerfile
     container_name: smart-bill-app
     ports:
-      - "8000:8000"
+      - "19283:8000"
     environment:
       - QWEN_API_KEY=${QWEN_API_KEY}
-      - LOG_LEVEL=INFO
-      - DATABASE_URL=sqlite:///./data/smart_bill.db
+      - SECRET_KEY=${SECRET_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DATABASE_URL=sqlite:////app/data/smart_bill.db
+      - CORS_ORIGINS=${CORS_ORIGINS:-["http://localhost:5173"]}
       - HOST=0.0.0.0
       - PORT=8000
     volumes:
       # 数据卷，用于持久化数据库和上传的图片
-      - ./data:/app/data
+      - smart-bill-data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -24,6 +26,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 5s
+
+volumes:
+  smart-bill-data:
 
 # 网络配置
 networks:
