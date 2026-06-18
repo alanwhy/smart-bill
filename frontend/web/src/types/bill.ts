@@ -41,7 +41,7 @@ export interface BillRecord {
   transaction_date: string
   category_id: number
   category: CategoryBrief
-  image_path?: string
+
   description?: string
   created_at: string
   updated_at: string

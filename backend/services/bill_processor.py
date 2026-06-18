@@ -63,7 +63,6 @@ class BillProcessor:
                     value=bill_item.value,
                     transaction_date=bill_item.date,
                     category_id=bill_item.category_id,
-                    image_path=file_path,
                 )
 
             return bill_items

@@ -155,7 +155,6 @@ def create_bill(
     value: float,
     transaction_date: str,
     category_id: int,
-    image_path: Optional[str] = None,
     description: Optional[str] = None,
 ) -> BillRecord:
     """创建账单记录"""
@@ -169,7 +168,6 @@ def create_bill(
             value=value,
             transaction_date=transaction_date,
             category_id=category_id,
-            image_path=image_path,
             description=description,
         )
         db.add(bill)

@@ -132,7 +132,6 @@ class BillRecordInDB(BaseModel):
     transaction_date: str = Field(..., description="交易日期")
     category_id: int = Field(..., description="分类 ID")
     category: CategoryBrief = Field(..., description="分类详情")
-    image_path: Optional[str] = Field(default=None, description="图片路径")
     description: Optional[str] = Field(default=None, description="账单备注", max_length=100)
     created_at: datetime = Field(..., description="创建时间")
     updated_at: datetime = Field(..., description="更新时间")
