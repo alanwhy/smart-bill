@@ -4,7 +4,7 @@
 
 ## 项目概览
 
-Qwen3-VL-Plus 智能账单识别服务，供 2 人（用户和媳妇）在本地 NAS 使用。
+基于千问大模型智能账单识别服务，供 2 人（用户和媳妇）在本地 NAS 使用。
 
 - **后端**: Python + FastAPI（http://localhost:8000）
 - **前端**: Vue 3 + TypeScript + Vite + Tailwind CSS + Pinia（http://localhost:5173）

@@ -146,7 +146,7 @@ _last commit: `528065773467cf436c258a9134c1de787aaeaa70`_
   - CRUD 操作（创建、查询、更新、删除）
   - SQLite 数据库连接和会话管理
 
-- [x] Phase 4：Qwen3-VL-Plus 集成
+- [x] Phase 4：千问模型 集成
   - 阿里云 DashScope API 调用
   - 图片验证和 base64 编码
   - 精细化系统提示词设计

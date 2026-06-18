@@ -1,4 +1,4 @@
-"""Qwen3-VL-Plus 视觉模型调用服务"""
+"""千问模型 视觉模型调用服务"""
 
 import base64
 import os
@@ -17,7 +17,7 @@ from backend.utils import qwen_logger as _log
 
 
 class QwenVisionService:
-    """Qwen3-VL-Plus 服务封装"""
+    """千问模型 服务封装"""
 
     def __init__(self):
         """初始化 Qwen 服务"""
@@ -51,7 +51,7 @@ class QwenVisionService:
             return base64.b64encode(f.read()).decode("utf-8")
 
     def call_qwen_vision(self, image_path: str, categories: Iterable = ()) -> str:
-        """调用 Qwen3-VL-Plus 识别账单
+        """调用 千问模型 识别账单
 
         Args:
             image_path: 待识别的图片路径

@@ -1,6 +1,6 @@
 # Smart Bill - 智能账单识别服务
 
-使用 Qwen3-VL-Plus 视觉模型识别账单图片，提取结构化账单数据。
+使用千问大模型视觉模型识别账单图片，提取结构化账单数据。
 
 ## 功能
 
@@ -19,7 +19,7 @@
 | 层 | 技术 |
 |---|---|
 | 后端 | Python 3.10+ · FastAPI · SQLAlchemy · SQLite · uv |
-| AI | 阿里云 DashScope Qwen3-VL-Plus |
+| AI | 千问大模型视觉模型 |
 | 前端 | Vue 3 · TypeScript · Vite · Tailwind CSS · Pinia |
 | 部署 | Docker Compose · Nginx · 本地 NAS / 服务器 |
 

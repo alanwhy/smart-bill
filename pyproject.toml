@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "smart-bill"
 version = "0.1.0"
-description = "Smart bill recognition service using Qwen3-VL-Plus vision model"
+description = "Smart bill recognition service using Qwen vision model"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.104.0",
