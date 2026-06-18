@@ -60,6 +60,7 @@ Read all docs that may need updating:
 - `docs/ARCHITECTURE.md`
 - `README.md`
 - `CLAUDE.md`
+- `frontend/web/README.md`
 
 Note which ones are out of date based on what the commits added.
 
@@ -105,6 +106,14 @@ This ensures docs reflect what was actually built, not just commit messages.
 - Update the tech stack table
 - Revise the "后续计划" section to remove completed items
 
+#### frontend/web/README.md
+- Update the project structure tree to match actual `src/` layout
+- Update the features list to reflect implemented functionality
+- Update npm scripts (e.g., `dev:remote`, `build`) and environment variable docs
+- Fix any stale references (e.g., removed files/dirs, outdated auth mechanism)
+- Remove items from the "后续任务" section that are now complete
+- Update the design system section if new component classes or icons were added
+
 #### CLAUDE.md
 - Mark completed phases with ✅
 - Update command reference to include new dev commands
@@ -120,6 +129,8 @@ After updating, do a quick cross-check:
 - Does API.md cover every endpoint in `backend/api/`?
 - Does ARCHITECTURE.md's file tree match `find backend/ -name "*.py" | head -30`?
 - Does README.md's quick-start actually work based on current scripts?
+- Does `frontend/web/README.md`'s project structure match the actual `src/` directory?
+- Does `frontend/web/README.md` correctly list all npm scripts from `package.json`?
 
 ## Output
 
@@ -132,6 +143,7 @@ Report a summary table like:
 | docs/ARCHITECTURE.md | 更新文件目录树，新增 Category 模型 |
 | README.md | 更新技术栈，快速启动命令 |
 | CLAUDE.md | Phase 12/13/14 标记 ✅，更新命令 |
+| frontend/web/README.md | 更新项目结构、功能列表、npm scripts |
 
 ## Tips
 

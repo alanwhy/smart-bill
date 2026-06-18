@@ -24,7 +24,8 @@ cd frontend/web && npm run dev    # 前端（新终端）
 export QWEN_API_KEY_PROD=your-prod-key
 export SECRET_KEY_PROD=$(openssl rand -hex 32)
 bash scripts/deploy.sh --init        # 首次初始化服务器
-bash scripts/deploy.sh               # 日常更新部署
+bash scripts/deploy.sh               # 后端日常更新部署
+bash scripts/deploy_frontend.sh      # 前端独立部署（19284 端口）
 ```
 
 **环境变量**（`.env`）：本地开发用，`cp .env.example .env` 后填入 `QWEN_API_KEY`、`SECRET_KEY` — 参考 `docs/SETUP.md`。部署时生产密钥通过 shell 环境变量 `QWEN_API_KEY_PROD` / `SECRET_KEY_PROD` 传入，不依赖本地 `.env`。

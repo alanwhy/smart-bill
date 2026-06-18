@@ -21,7 +21,7 @@
 | 后端 | Python 3.10+ · FastAPI · SQLAlchemy · SQLite · uv |
 | AI | 阿里云 DashScope Qwen3-VL-Plus |
 | 前端 | Vue 3 · TypeScript · Vite · Tailwind CSS · Pinia |
-| 部署 | Docker Compose · 本地 NAS |
+| 部署 | Docker Compose · Nginx · 本地 NAS / 服务器 |
 
 ## 快速开始
 
@@ -61,24 +61,30 @@ npm run dev
 
 ```bash
 # 首次初始化服务器（仅需执行一次）
-cp .env.production .env
-# 编辑 .env，填入真实的 QWEN_API_KEY 和 SECRET_KEY
+# 先 export 生产密钥（不依赖 .env 文件）
+export QWEN_API_KEY_PROD=your-production-key
+export SECRET_KEY_PROD=$(openssl rand -hex 32)
 bash scripts/deploy.sh --init
 
-# 日常更新部署
+# 日常更新部署（每次发布前 export 密钥即可）
+export QWEN_API_KEY_PROD=your-production-key
+export SECRET_KEY_PROD=your-production-secret
 bash scripts/deploy.sh
+
+# 前端独立部署（可选，单独更新前端）
+bash scripts/deploy_frontend.sh
 ```
 
-> 部署脚本会自动构建前端、上传文件、重启 Docker 容器，服务监听端口 `19283`。
+> 后端监听端口 `19283`，前端 Nginx 容器监听端口 `19284`。
 
 ### 访问地址
 
-| 服务 | 地址 |
-|---|---|
-| 前端应用 | http://localhost:5173 |
-| 后端 API | http://localhost:8000 |
-| Swagger 文档 | http://localhost:8000/docs |
-| 健康检查 | http://localhost:8000/health |
+| 服务 | 本地开发 | 生产环境 |
+|---|---|---|
+| 前端应用 | http://localhost:5173 | http://server:19284 |
+| 后端 API | http://localhost:8000 | http://server:19283 |
+| Swagger 文档 | http://localhost:8000/docs | — |
+| 健康检查 | http://localhost:8000/health | — |
 
 ## 项目结构
 
@@ -98,9 +104,14 @@ smart-bill/
 │       ├── utils/    # 工具（cycle.ts 周期日期计算）
 │       └── api/      # axios 请求封装
 ├── docker/           # Docker 配置（生产环境）
+│   ├── Dockerfile          # 后端镜像
+│   ├── Dockerfile.frontend # 前端 Nginx 镜像
+│   ├── docker-compose.yml  # 编排（后端:19283 + 前端:19284）
+│   └── nginx.conf          # 前端 Nginx 配置（SPA + API 代理）
 ├── scripts/
-│   ├── restart.sh    # 一键重启（开发环境）
-│   └── deploy.sh     # 一键部署（生产环境）
+│   ├── restart.sh          # 一键重启（开发环境）
+│   ├── deploy.sh           # 后端一键部署（生产环境）
+│   └── deploy_frontend.sh  # 前端一键部署（生产环境）
 └── docs/             # 文档
 ```
 

@@ -1,12 +1,32 @@
 # 更新日志
 
+## [0.5.0] - 2026-06-18
+
+### 已实现
+
+- [x] Phase 19：前端独立容器化部署
+  - **前端 Dockerfile** `docker/Dockerfile.frontend`：基于 `nginx:alpine`，将预构建 dist 复制到 Nginx 静态目录
+  - **Nginx 配置** `docker/nginx.conf`：gzip 压缩、静态资源长效缓存、`/api` 反向代理到后端容器、SPA 路由回退
+  - **前端一键部署脚本** `scripts/deploy_frontend.sh`：本地构建 → rsync 同步产物 → 远程构建并启动 frontend 容器 → 健康检查（端口 19284）
+  - **Docker Compose 扩展**：`docker/docker-compose.yml` 新增 `frontend` service（19284:80），depends_on 后端
+
+- [x] Phase 20：环境变量配置优化
+  - 移除 `.env.production` 文件，改为通过 shell 环境变量 `QWEN_API_KEY_PROD` / `SECRET_KEY_PROD` 传入生产密钥，避免敏感信息落盘
+  - `scripts/deploy.sh` 优化：部署前检查生产密钥环境变量是否已 export，动态生成临时 `.env` 文件部署完成后自动删除
+  - `.env.example` 精简：移除生产相关字段，专注本地开发必要配置（`QWEN_API_KEY`、`SECRET_KEY`、`LOG_LEVEL`、`HOST`、`PORT`、`DATABASE_URL`、`CORS_ORIGINS`）
+  - `docs/SETUP.md` 新增完整生产部署说明（密钥管理、两阶段部署流程）
+
+_last commit: `908158a9e9dc94d82c4feaa3631f7235ffb58034`_
+
+---
+
 ## [0.4.0] - 2026-06-18
 
 ### 已实现
 
 - [x] Phase 17：生产环境部署
   - **一键部署脚本** `scripts/deploy.sh`：支持 `--init`（首次初始化服务器）和日常更新部署两种模式
-  - **生产环境变量模板** `.env.production`：含 `QWEN_API_KEY`、`SECRET_KEY`、`CORS_ORIGINS` 等配置项
+  - **生产环境变量模板** `.env.production`（已于 v0.5.0 移除，改为 shell 环境变量方式）：原含 `QWEN_API_KEY`、`SECRET_KEY`、`CORS_ORIGINS` 等配置项
   - **前端远程环境配置** `frontend/web/.env.remote`：生产环境 API 地址设置
   - **Docker Compose 优化**：端口改为 19283:8000，持久化数据卷（`smart-bill-data`），healthcheck 配置
   - **Dockerfile 优化**：构建流程精简

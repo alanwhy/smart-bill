@@ -179,11 +179,13 @@ smart-bill/
 │       └── vite.config.ts   # Vite 配置（含后端代理）
 ├── scripts/
 │   ├── restart.sh           # 一键重启前后端脚本（开发环境）
-│   └── deploy.sh            # 一键生产部署脚本（支持 --init 首次初始化）
+│   ├── deploy.sh            # 后端一键生产部署脚本（支持 --init 首次初始化）
+│   └── deploy_frontend.sh   # 前端一键部署脚本（本地构建→rsync→容器）
 ├── docker/
-│   ├── Dockerfile
-│   └── docker-compose.yml   # 生产容器编排（端口 19283）
-├── .env.production          # 生产环境变量模板
+│   ├── Dockerfile           # 后端镜像（Python + FastAPI）
+│   ├── Dockerfile.frontend  # 前端镜像（nginx:alpine + 预构建 dist）
+│   ├── docker-compose.yml   # 生产容器编排（后端:19283 + 前端:19284）
+│   └── nginx.conf           # 前端 Nginx 配置（gzip/缓存/API反代/SPA回退）
 └── docs/
     ├── API.md
     ├── ARCHITECTURE.md
@@ -214,3 +216,9 @@ smart-bill/
 - Pinia 状态管理简洁
 - Vite 代理无需跨域配置
 - Tailwind CSS 快速响应式开发
+
+### 前端独立部署设计
+- 前端独立为 `Dockerfile.frontend`（`nginx:alpine`），与后端 Python 容器解耦
+- Nginx 在容器内处理静态资源，并将 `/api` 路径反向代理到后端容器（`smart-bill-app:8000`），前端无需感知后端地址
+- 本地 `vite build` 构建产物通过 `rsync` 同步到服务器，再由 Docker COPY 打入镜像，避免在服务器上安装 Node.js
+- 生产密钥通过 shell 环境变量（`QWEN_API_KEY_PROD`/`SECRET_KEY_PROD`）传入，部署脚本动态生成临时 `.env` 文件，部署完成后自动删除，敏感信息不落盘
