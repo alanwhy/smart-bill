@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen flex flex-col items-center justify-center bg-background text-text px-4 py-12">
     <!-- Brand -->
-    <div class="mb-8 text-center">
+    <div class="mb-8 text-center login-brand-appear">
       <div class="flex items-center justify-center gap-2.5 mb-2">
         <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
           <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -15,7 +15,7 @@
     </div>
 
     <!-- Login Card -->
-    <div class="w-full max-w-sm card p-8">
+    <div class="w-full max-w-sm card p-8 login-card-appear">
       <h2 class="text-xl font-semibold text-text mb-6">登录</h2>
 
       <form @submit.prevent="handleLogin" class="space-y-5">
@@ -72,7 +72,9 @@
         </div>
 
         <!-- Error -->
-        <p v-if="errorMsg" class="text-sm text-error">{{ errorMsg }}</p>
+        <Transition name="fade">
+          <p v-if="errorMsg" :key="errorMsg" class="text-sm text-error shake">{{ errorMsg }}</p>
+        </Transition>
 
         <!-- Submit -->
         <button
@@ -92,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -105,12 +107,14 @@ const isLoading = ref(false)
 const errorMsg = ref('')
 
 async function handleLogin() {
+  // 先清空再设置，让 :key 变化触发 shake 重新播放
   errorMsg.value = ''
   isLoading.value = true
   try {
     await authStore.login(form.value.username, form.value.password)
     router.push({ name: 'Dashboard' })
   } catch (e) {
+    await nextTick()
     errorMsg.value = (e as Error).message || '登录失败，请重试'
   } finally {
     isLoading.value = false

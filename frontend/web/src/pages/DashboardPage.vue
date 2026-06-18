@@ -74,23 +74,23 @@
     </div>
 
     <!-- 筛选面板（移动端） -->
-    <transition name="slide">
-      <div
-        v-if="isFilterSheetOpen"
-        class="fixed inset-0 z-40 lg:hidden"
-      >
-        <!-- 背景 -->
+    <Teleport to="body">
+      <Transition name="overlay">
         <div
+          v-if="isFilterSheetOpen"
+          class="fixed inset-0 z-40 lg:hidden bg-black/50"
           @click="closeFilterSheet"
-          class="absolute inset-0 bg-black/50"
         />
-
-        <!-- 筛选面板 -->
-        <div class="absolute bottom-0 left-0 right-0 bg-surface border-t border-border rounded-t-2xl p-6 animate-in slide-in-from-bottom">
+      </Transition>
+      <Transition name="slide">
+        <div
+          v-if="isFilterSheetOpen"
+          class="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-surface border-t border-border rounded-t-2xl p-6"
+        >
           <BillFilters @apply="applyFilters" @close="closeFilterSheet" />
         </div>
-      </div>
-    </transition>
+      </Transition>
+    </Teleport>
 
     <!-- 筛选栏（桌面端） -->
     <div class="hidden lg:block px-8 py-4 border-b border-border bg-surface/50">
@@ -120,15 +120,16 @@
       </div>
 
       <!-- 账单列表 -->
-      <div v-else class="space-y-3">
+      <TransitionGroup v-else name="bill-list" tag="div" class="space-y-3">
         <BillCard
-          v-for="bill in billsStore.bills"
+          v-for="(bill, index) in billsStore.bills"
           :key="bill.id"
           :bill="bill"
+          :style="{ transitionDelay: `${index * 35}ms` }"
           @edit="(b) => editBill(b)"
           @delete="(b) => deleteBill(b)"
         />
-      </div>
+      </TransitionGroup>
     </div>
 
     <!-- 上传模态框 -->

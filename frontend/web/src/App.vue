@@ -88,7 +88,11 @@
 
       <!-- 主内容区域 -->
       <main class="flex-1 overflow-y-auto">
-        <router-view />
+        <RouterView v-slot="{ Component }">
+          <Transition name="page" mode="out-in">
+            <component :is="Component" :key="$route.path" />
+          </Transition>
+        </RouterView>
       </main>
     </div>
 

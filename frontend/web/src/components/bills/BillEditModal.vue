@@ -1,19 +1,25 @@
 <template>
-  <!-- 模态框背景 -->
-  <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-    <div class="bg-surface rounded-2xl shadow-xl w-full max-w-lg">
-      <!-- 头部 -->
-      <div class="border-b border-border px-6 py-4 flex items-center justify-between">
-        <h2 class="text-xl font-bold text-text">{{ mode === 'create' ? '手动录入账单' : '编辑账单' }}</h2>
-        <button
-          @click="emit('close')"
-          class="p-2 hover:bg-border rounded-lg transition-colors duration-200"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+  <Teleport to="body">
+    <!-- 背景蒙层 -->
+    <Transition name="overlay">
+      <div class="fixed inset-0 z-50 bg-black/50" @click="emit('close')" />
+    </Transition>
+    <!-- 模态框 -->
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+      <Transition name="modal" appear>
+        <div class="bg-surface rounded-2xl shadow-xl w-full max-w-lg pointer-events-auto">
+          <!-- 头部 -->
+          <div class="border-b border-border px-6 py-4 flex items-center justify-between">
+            <h2 class="text-xl font-bold text-text">{{ mode === 'create' ? '手动录入账单' : '编辑账单' }}</h2>
+            <button
+              @click="emit('close')"
+              class="p-2 hover:bg-border rounded-lg transition-colors duration-200"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
       <!-- 内容 -->
       <div class="p-6 space-y-4">
@@ -140,8 +146,10 @@
           {{ isSubmitting ? '保存中...' : (mode === 'create' ? '保存' : '保存修改') }}
         </button>
       </div>
+        </div>
+      </Transition>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
