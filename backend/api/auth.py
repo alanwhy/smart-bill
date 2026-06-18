@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
-from backend.core.models import BillResponse, ChangePasswordRequest, LoginRequest, LoginResponse, UserInfo
+from backend.core.models import BillResponse, ChangePasswordRequest, LoginRequest, LoginResponse, UpdateCycleRequest, UserCycleResponse, UserInfo
 from backend.database import crud, get_db
 from backend.services.auth_service import create_access_token, decode_token, hash_password, verify_password
 from backend.utils import logger
@@ -79,4 +79,34 @@ def change_password(
 
     except Exception as e:
         logger.error(f"Change password error: {str(e)}")
+        return BillResponse(code=500, msg="服务器错误", data={"error": str(e)})
+
+
+@router.get("/cycle", response_model=BillResponse)
+def get_cycle(authorization: str = Header(...), db: Session = Depends(get_db)) -> BillResponse:
+    """获取当前用户的月度账单周期起始日"""
+    try:
+        user = get_current_user(authorization, db)
+        cycle_start_day = crud.get_user_cycle(db, user.id)
+        data = UserCycleResponse(cycle_start_day=cycle_start_day)
+        return BillResponse(code=0, msg="success", data=data.model_dump())
+    except Exception as e:
+        logger.error(f"Get cycle error: {str(e)}")
+        return BillResponse(code=500, msg="服务器错误", data={"error": str(e)})
+
+
+@router.put("/cycle", response_model=BillResponse)
+def update_cycle(
+    request: UpdateCycleRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+) -> BillResponse:
+    """更新当前用户的月度账单周期起始日（1-28）"""
+    try:
+        user = get_current_user(authorization, db)
+        updated_user = crud.update_user_cycle(db, user.id, request.cycle_start_day)
+        data = UserCycleResponse(cycle_start_day=updated_user.cycle_start_day)
+        return BillResponse(code=0, msg="success", data=data.model_dump())
+    except Exception as e:
+        logger.error(f"Update cycle error: {str(e)}")
         return BillResponse(code=500, msg="服务器错误", data={"error": str(e)})

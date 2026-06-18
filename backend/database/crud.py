@@ -324,3 +324,36 @@ def update_password(db: Session, user_id: int, new_hashed_password: str) -> User
     except Exception as e:
         db.rollback()
         raise DatabaseError(f"Failed to update password: {str(e)}")
+
+
+def get_user_cycle(db: Session, user_id: int) -> int:
+    """获取用户的月度账单周期起始日（1-28，默认 1）"""
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise ResourceNotFoundError("User", user_id)
+        return user.cycle_start_day if user.cycle_start_day is not None else 1
+    except ResourceNotFoundError:
+        raise
+    except Exception as e:
+        raise DatabaseError(f"Failed to get user cycle: {str(e)}")
+
+
+def update_user_cycle(db: Session, user_id: int, cycle_start_day: int) -> User:
+    """更新用户的月度账单周期起始日（1-28）"""
+    try:
+        if not (1 <= cycle_start_day <= 28):
+            raise ValidationError("Invalid cycle_start_day", detail="起始日必须在 1 到 28 之间")
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise ResourceNotFoundError("User", user_id)
+        user.cycle_start_day = cycle_start_day
+        user.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(user)
+        return user
+    except (ResourceNotFoundError, ValidationError):
+        raise
+    except Exception as e:
+        db.rollback()
+        raise DatabaseError(f"Failed to update user cycle: {str(e)}")

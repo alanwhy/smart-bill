@@ -194,3 +194,15 @@ class ChangePasswordRequest(BaseModel):
 
     old_password: str = Field(..., description="旧密码", min_length=1)
     new_password: str = Field(..., description="新密码", min_length=6)
+
+
+class UserCycleResponse(BaseModel):
+    """用户月度周期设置响应"""
+
+    cycle_start_day: int = Field(..., description="月度账单周期起始日（1-28）", ge=1, le=28)
+
+
+class UpdateCycleRequest(BaseModel):
+    """更新用户月度周期请求"""
+
+    cycle_start_day: int = Field(..., description="月度账单周期起始日（1-28）", ge=1, le=28)

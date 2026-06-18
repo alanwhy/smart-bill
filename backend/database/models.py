@@ -25,6 +25,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True, comment="用户 ID")
     username = Column(String(50), nullable=False, unique=True, index=True, comment="用户名")
     hashed_password = Column(String(255), nullable=False, comment="哈希密码")
+    cycle_start_day = Column(Integer, nullable=False, default=1, comment="月度账单周期起始日（1-28）")
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment="创建时间")
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False, comment="更新时间")
 

@@ -6,6 +6,7 @@ export const useAuthStore = defineStore("auth", () => {
   const token = ref<string | null>(null);
   const userId = ref<number | null>(null);
   const username = ref<string | null>(null);
+  const cycleStartDay = ref<number>(1);
 
   const isAuthenticated = computed(() => !!token.value);
 
@@ -30,17 +31,36 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.setItem("token", data.token);
     localStorage.setItem("userId", String(data.user_id));
     localStorage.setItem("username", data.username);
+
+    // 登录后自动拉取周期设置
+    await fetchCycle();
   }
 
   function logout() {
     token.value = null;
     userId.value = null;
     username.value = null;
+    cycleStartDay.value = 1;
 
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     localStorage.removeItem("username");
   }
 
-  return { token, userId, username, isAuthenticated, initFromStorage, login, logout };
+  async function fetchCycle() {
+    try {
+      const data = await authApi.getCycle();
+      cycleStartDay.value = data.cycle_start_day;
+    } catch {
+      // 静默失败，使用默认值 1
+      cycleStartDay.value = 1;
+    }
+  }
+
+  async function saveCycle(day: number) {
+    const data = await authApi.updateCycle(day);
+    cycleStartDay.value = data.cycle_start_day;
+  }
+
+  return { token, userId, username, cycleStartDay, isAuthenticated, initFromStorage, login, logout, fetchCycle, saveCycle };
 });

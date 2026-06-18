@@ -80,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useUiStore } from '@/stores/ui'
 import { useCategoriesStore } from '@/stores/categories'
 
@@ -111,6 +111,18 @@ let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
 onMounted(() => {
   categoriesStore.getOrFetch()
 })
+
+// 当外部（如快捷按钮）更新 uiStore.filters 时，同步到本地 localFilters
+watch(
+  () => uiStore.filters,
+  (newFilters) => {
+    localFilters.startDate = newFilters.startDate || ''
+    localFilters.endDate = newFilters.endDate || ''
+    localFilters.category_id = newFilters.category_id
+    localFilters.searchText = newFilters.searchText || ''
+  },
+  { deep: true }
+)
 
 const applyFilters = () => {
   dateError.value = ''

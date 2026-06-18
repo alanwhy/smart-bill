@@ -73,6 +73,18 @@ def init_db():
             except Exception:
                 pass  # 列已存在则忽略
 
+        # 迁移：为旧库添加 cycle_start_day 列（幂等）
+        with engine.connect() as conn:
+            try:
+                conn.execute(
+                    __import__("sqlalchemy").text(
+                        "ALTER TABLE users ADD COLUMN cycle_start_day INTEGER NOT NULL DEFAULT 1"
+                    )
+                )
+                conn.commit()
+            except Exception:
+                pass  # 列已存在则忽略
+
         db = SessionLocal()
         try:
             seed_default_categories(db)

@@ -6,8 +6,33 @@
         <!-- 统计信息 -->
         <div class="flex items-center gap-4">
           <div class="flex flex-col">
-            <p class="text-xs text-text-muted uppercase tracking-wider">本月支出</p>
+            <p class="text-xs text-text-muted uppercase tracking-wider">{{ expenseLabel }}</p>
             <p class="text-2xl font-bold text-primary">¥{{ totalExpense.toFixed(2) }}</p>
+          </div>
+          <!-- 周期快捷按钮 -->
+          <div class="flex gap-1 ml-2">
+            <button
+              @click="switchCycle(0)"
+              :class="[
+                'px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150',
+                cycleOffset === 0
+                  ? 'bg-primary text-white'
+                  : 'bg-surface border border-border text-text-secondary hover:border-primary/50',
+              ]"
+            >
+              本期
+            </button>
+            <button
+              @click="switchCycle(-1)"
+              :class="[
+                'px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150',
+                cycleOffset === -1
+                  ? 'bg-primary text-white'
+                  : 'bg-surface border border-border text-text-secondary hover:border-primary/50',
+              ]"
+            >
+              上期
+            </button>
           </div>
         </div>
 
@@ -134,6 +159,7 @@ import { useBillsStore } from '@/stores/bills'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import type { BillRecord } from '@/types/bill'
+import { getCycleDates } from '@/utils/cycle'
 import BillCard from '@/components/bills/BillCard.vue'
 import BillFilters from '@/components/bills/BillFilters.vue'
 import BillUploadModal from '@/components/bills/BillUploadModal.vue'
@@ -150,19 +176,40 @@ const editingBill = ref<BillRecord | null>(null)
 const deletingBillId = ref<number | null>(null)
 const toastMessage = ref<string | null>(null)
 
+// 当前周期偏移：0=本期，-1=上期，null=自定义
+const cycleOffset = ref<0 | -1 | null>(0)
+
 const isLoading = computed(() => billsStore.isLoading)
 const totalExpense = computed(() => billsStore.totalExpense)
-
 const isFilterSheetOpen = computed(() => uiStore.isFilterSheetOpen)
+
+const expenseLabel = computed(() => {
+  if (cycleOffset.value === null) return '自定义支出'
+  return getCycleDates(authStore.cycleStartDay, cycleOffset.value).label
+})
 
 // 生命周期
 onMounted(async () => {
   if (!authStore.userId) return
-  await billsStore.fetchBills(authStore.userId)
+  // 先拉取周期设置，再初始化日期范围
+  await authStore.fetchCycle()
+  const { startDate, endDate } = getCycleDates(authStore.cycleStartDay, 0)
+  uiStore.setFilters({ startDate, endDate })
+  await billsStore.fetchBills(authStore.userId, uiStore.filters)
 })
 
 // 方法
+const switchCycle = async (offset: 0 | -1) => {
+  cycleOffset.value = offset
+  const { startDate, endDate } = getCycleDates(authStore.cycleStartDay, offset)
+  uiStore.setFilters({ startDate, endDate, category_id: undefined, searchText: undefined })
+  if (!authStore.userId) return
+  await billsStore.fetchBills(authStore.userId, uiStore.filters)
+}
+
 const applyFilters = async () => {
+  // 手动筛选时取消周期快捷按钮高亮
+  cycleOffset.value = null
   if (!authStore.userId) return
   await billsStore.fetchBills(authStore.userId, uiStore.filters)
   uiStore.closeFilterSheet()
