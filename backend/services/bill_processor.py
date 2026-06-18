@@ -1,8 +1,6 @@
 """业务流程编排 - 账单处理整体流程"""
 
 import os
-import shutil
-import tempfile
 from typing import List
 
 from sqlalchemy.orm import Session
@@ -43,20 +41,12 @@ class BillProcessor:
             FileError: 文件处理错误
             ValidationError: 验证错误
         """
-        temp_file_path = None
-
         try:
             # Step 1: 验证文件
             validate_image_file(file_path)
 
-            # Step 2: 复制文件到临时目录（保存原始图片）
-            temp_dir = tempfile.gettempdir()
-            temp_file_name = f"bill_{os.urandom(8).hex()}_{os.path.basename(file_path)}"
-            temp_file_path = os.path.join(temp_dir, temp_file_name)
-            shutil.copy2(file_path, temp_file_path)
-
-            # Step 3: 调用 Qwen 识别
-            qwen_response = self._get_qwen_service().call_qwen_vision(temp_file_path)
+            # Step 2: 调用 Qwen 识别（直接使用传入的 file_path，无需二次复制）
+            qwen_response = self._get_qwen_service().call_qwen_vision(file_path)
 
             # Step 4: 加载分类用于模糊匹配，再解析响应
             categories = crud.list_categories(db)
@@ -71,7 +61,7 @@ class BillProcessor:
                     value=bill_item.value,
                     transaction_date=bill_item.date,
                     category_id=bill_item.category_id,
-                    image_path=temp_file_path,
+                    image_path=file_path,
                 )
 
             return bill_items
@@ -80,10 +70,3 @@ class BillProcessor:
             raise
         except Exception as e:
             raise ValidationError(f"Failed to process bill image: {str(e)}")
-        finally:
-            # 清理临时文件
-            if temp_file_path and os.path.exists(temp_file_path):
-                try:
-                    os.remove(temp_file_path)
-                except Exception:
-                    pass

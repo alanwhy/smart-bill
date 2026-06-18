@@ -122,7 +122,7 @@ import { useAuthStore } from '@/stores/auth'
 
 const emit = defineEmits<{
   close: []
-  success: []
+  success: [fileCount: number]
 }>()
 
 const billsStore = useBillsStore()
@@ -203,24 +203,19 @@ const handleUpload = async () => {
       return
     }
 
-    // 模拟进度更新
-    const progressInterval = setInterval(() => {
-      if (uploadProgress.value < 90) {
-        uploadProgress.value = Math.min(90, uploadProgress.value + Math.random() * 30)
-      }
-    }, 300)
+    const fileCount = selectedFiles.value.length
+    const filesToUpload = [...selectedFiles.value]
 
-    await billsStore.uploadBills(userId, selectedFiles.value)
+    // 立即通知父组件（关闭弹窗并插入 placeholder），不等待 Qwen 响应
+    selectedFiles.value = []
+    errorMessage.value = ''
+    emit('success', fileCount)
 
-    clearInterval(progressInterval)
-    uploadProgress.value = 100
-
-    // 延迟后关闭
-    setTimeout(() => {
-      selectedFiles.value = []
-      errorMessage.value = ''
-      emit('success')
-    }, 500)
+    // 后台发起上传请求（不 await，让后端并发处理）
+    billsStore.uploadBills(userId, filesToUpload)
+      .catch((_e: unknown) => {
+        // 后台失败不影响已关闭的弹窗，轮询超时后 placeholder 会自动消失
+      })
   } catch (e) {
     errorMessage.value = (e as Error).message || '上传失败，请重试'
   } finally {

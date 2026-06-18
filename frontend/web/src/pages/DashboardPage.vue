@@ -195,8 +195,10 @@ const confirmDelete = async () => {
   }
 }
 
-const onUploadSuccess = () => {
+const onUploadSuccess = (fileCount: number) => {
   showUploadModal.value = false
+  billsStore.addPlaceholders(fileCount)
+  billsStore.startPolling(authStore.userId!, fileCount, uiStore.filters)
 }
 
 const onBillUpdated = () => {

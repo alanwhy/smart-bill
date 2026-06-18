@@ -45,6 +45,7 @@ export interface BillRecord {
   description?: string
   created_at: string
   updated_at: string
+  isPlaceholder?: boolean
 }
 
 export interface UpdateBillRequest {
