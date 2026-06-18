@@ -1,5 +1,37 @@
 # 更新日志
 
+## [0.3.0] - 2026-06-18
+
+### 已实现
+
+- [x] Phase 15：账单高级功能
+  - **收支类型区分**：`value` 字段约定负数=支出、正数=收入，前端 BillCard/BillEditModal 同步展示
+  - **手动创建账单**：`POST /api/v1/bills`，无需上传图片即可创建账单（`CreateBillRequest`）
+  - **并发图片上传**：多张图片并发调用 Qwen API（`asyncio.gather` + `run_in_executor`），每张图片独立线程和独立 DB session
+  - **上传占位符**：前端上传中实时显示骨架占位卡，提升用户体验
+
+- [x] Phase 16（部分）：用户个性化设置
+  - **月度账单周期设置**：用户可自定义周期起始日（1-28），如每月 15 日到次月 14 日为一个周期
+  - `GET /api/v1/auth/cycle` - 获取当前用户周期起始日
+  - `PUT /api/v1/auth/cycle` - 更新周期起始日（1-28）
+  - `frontend/web/src/utils/cycle.ts` - 周期日期计算工具库（`getCycleDates`）
+  - `SettingsPage.vue` 新增周期起始日设置 UI
+  - `DashboardPage.vue` 支持按自定义周期筛选账单（本周期 / 上周期）
+
+- [x] 账单识别提示词工程（prompts.py）
+  - 将 system prompt 从 `qwen_vision.py` 中提取，集中到 `backend/services/prompts.py` 独立管理
+  - `build_bill_recognition_system_prompt(categories)` - 动态注入当前分类列表
+  - Qwen API 配置项（model、max_tokens 等）统一到 `backend/config.py`
+
+- [x] 数据模型升级
+  - `BillRecord.description` 替代原 `notes`（数据库字段重命名，max_length=100）
+  - `BillRecord.category_id` 外键关联 `categories` 表（原来存 `category` 字符串）
+  - `BillRecordInDB` 新增嵌套 `CategoryBrief` 返回分类详情（id、name、icon、color）
+  - `User` 表新增 `cycle_start_day` 字段（默认 1）
+  - API 查询账单支持 `merchant_name` 模糊搜索过滤
+
+---
+
 ## [0.2.0] - 2026-06-17
 
 ### 已实现

@@ -23,8 +23,7 @@ Response:
   "code": 0,
   "msg": "success",
   "data": {
-    "access_token": "eyJ...",
-    "token_type": "bearer",
+    "token": "eyJ...",
     "user_id": 1,
     "username": "admin"
   }
@@ -62,20 +61,98 @@ Body:
 Response:
 {
   "code": 0,
-  "msg": "success"
+  "msg": "密码修改成功"
+}
+```
+
+### 获取月度账单周期设置
+```
+GET /auth/cycle
+Authorization: Bearer <token>
+
+Response:
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "cycle_start_day": 1
+  }
+}
+```
+
+### 更新月度账单周期设置
+```
+PUT /auth/cycle
+Authorization: Bearer <token>
+Content-Type: application/json
+
+Body:
+{
+  "cycle_start_day": 15
+}
+
+# cycle_start_day: 1-28，代表每月几号开始新的账单周期
+# 例如：15 表示每月 15 日到次月 14 日为一个周期
+
+Response:
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "cycle_start_day": 15
+  }
 }
 ```
 
 ## 账单 API
 
-### 上传并识别账单
+### 手动创建账单
+```
+POST /bills
+Content-Type: application/json
+
+Body:
+{
+  "user_id": 1,
+  "value": -50.0,
+  "merchant_name": "麦当劳",
+  "transaction_date": "2026-06-18T12:00:00",
+  "category_id": 1,
+  "description": "午饭"
+}
+
+# value 约定：负数=支出，正数=收入
+
+Response:
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "id": 10,
+    "user_id": 1,
+    "value": -50.0,
+    "merchant_name": "麦当劳",
+    "transaction_date": "2026-06-18T12:00:00",
+    "category_id": 1,
+    "category": {"id": 1, "name": "餐饮", "icon": "🍽️", "color": "#F97316"},
+    "description": "午饭",
+    "image_path": null,
+    "created_at": "2026-06-18T12:00:00",
+    "updated_at": "2026-06-18T12:00:00"
+  }
+}
+```
+
+### 上传并识别账单（并发处理）
 ```
 POST /bills/upload
 Content-Type: multipart/form-data
 
 Parameters:
-- files: 账单图片文件（JPG/PNG）
+- files: 账单图片文件（JPG/PNG，支持多张并发）
 - user_id: 用户 ID（整数）
+
+# 多张图片会并发调用 Qwen API，全部完成后统一返回
 
 Response:
 {
@@ -83,10 +160,17 @@ Response:
   "msg": "success",
   "data": [
     {
-      "value": 50.0,
-      "name": "麦当劳",
-      "date": "2026-06-16 10:00:00",
-      "category": "餐饮"
+      "id": 10,
+      "user_id": 1,
+      "value": -50.0,
+      "merchant_name": "麦当劳",
+      "transaction_date": "2026-06-18 10:00:00",
+      "category_id": 1,
+      "category": {"id": 1, "name": "餐饮", "icon": "🍽️", "color": "#F97316"},
+      "description": null,
+      "image_path": "/tmp/xxx.jpg",
+      "created_at": "2026-06-18T10:00:00",
+      "updated_at": "2026-06-18T10:00:00"
     }
   ]
 }
@@ -94,13 +178,14 @@ Response:
 
 ### 查询账单列表
 ```
-GET /bills?user_id=1&start_date=2026-06-01&end_date=2026-06-30&category=餐饮
+GET /bills?user_id=1&start_date=2026-06-01&end_date=2026-06-30&category_id=1&merchant_name=麦当劳
 
 Parameters:
 - user_id: 用户 ID（必需）
 - start_date: 开始日期（可选，YYYY-MM-DD）
 - end_date: 结束日期（可选，YYYY-MM-DD）
-- category: 分类（可选）
+- category_id: 分类 ID（可选）
+- merchant_name: 商户名模糊搜索（可选）
 
 Response:
 {
@@ -109,12 +194,16 @@ Response:
   "data": [
     {
       "id": 1,
-      "value": 50.0,
-      "name": "麦当劳",
-      "date": "2026-06-16 10:00:00",
-      "category": "餐饮",
-      "notes": "工作午餐",
-      "created_at": "2026-06-16T10:00:00"
+      "user_id": 1,
+      "value": -50.0,
+      "merchant_name": "麦当劳",
+      "transaction_date": "2026-06-16 10:00:00",
+      "category_id": 1,
+      "category": {"id": 1, "name": "餐饮", "icon": "🍽️", "color": "#F97316"},
+      "description": "工作午餐",
+      "image_path": null,
+      "created_at": "2026-06-16T10:00:00",
+      "updated_at": "2026-06-16T10:00:00"
     }
   ]
 }
@@ -127,10 +216,10 @@ Content-Type: application/json
 
 Body:
 {
-  "value": 55.0,
-  "name": "麦当劳（修改）",
-  "category": "餐饮",
-  "notes": "备注信息"
+  "value": -55.0,
+  "merchant_name": "麦当劳（修改）",
+  "category_id": 1,
+  "description": "备注信息"
 }
 
 Response:

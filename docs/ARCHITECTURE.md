@@ -56,11 +56,24 @@ BillRecord(
   id: int,
   user_id: int,
   merchant_name: str,
-  value: float,
+  value: float,               # 负数=支出，正数=收入
   transaction_date: str,
-  category: str,
-  notes: str | None,        # 账单备注（2026-06-17 新增）
-  image_path: str,
+  category_id: int,           # 外键关联 categories.id
+  category: CategoryBrief,    # lazy="joined" 自动加载
+  description: str | None,    # 账单备注（max 100 字）
+  image_path: str | None,     # 识别图片路径（手动创建时为 null）
+  created_at: datetime,
+  updated_at: datetime
+)
+```
+
+### User（用户表）
+```python
+User(
+  id: int,
+  username: str,
+  hashed_password: str,
+  cycle_start_day: int,       # 月度账单周期起始日（1-28，默认 1）
   created_at: datetime,
   updated_at: datetime
 )
@@ -80,18 +93,36 @@ Category(
 
 ## 数据流
 
-### 账单上传流程
+### 账单上传流程（并发处理）
 ```
-上传图片
+上传多张图片
+  ↓
+API 路由 (bills.py) - 保存所有临时文件
+  ↓
+asyncio.gather() 并发执行
+  ├─ _process_single_bill(img1) 独立线程 + DB session
+  ├─ _process_single_bill(img2) 独立线程 + DB session
+  └─ _process_single_bill(imgN) ...
+  ↓
+每个线程内：
+  ├─ BillProcessor.process_bill_image()
+  ├─ prompts.py 动态构建 system prompt
+  ├─ qwen_vision.py 调用 Qwen API
+  ├─ bill_parser.py 解析 JSON
+  └─ crud.py 保存数据库
+  ↓
+合并结果返回
+```
+
+### 手动创建账单流程
+```
+POST /bills (JSON body)
   ↓
 API 路由 (bills.py)
   ↓
-BillProcessor.process_bill_image()
-  ├─ 图片验证 (validators.py)
-  ├─ 调用 Qwen (qwen_vision.py)
-  ├─ 解析数据 (bill_parser.py)
-  ├─ 保存数据库 (crud.py)
-  └─ 返回结果
+crud.create_bill() 直接写入数据库
+  ↓
+返回 BillRecordInDB（含嵌套 CategoryBrief）
 ```
 
 ### 认证流程
@@ -121,7 +152,8 @@ smart-bill/
 │   │   ├── auth_service.py  # 用户认证逻辑
 │   │   ├── qwen_vision.py   # Qwen API 调用
 │   │   ├── bill_parser.py   # 数据解析（JSON/文本）
-│   │   └── bill_processor.py # 流程编排
+   │   ├── bill_processor.py # 流程编排
+   │   └── prompts.py       # LLM 提示词管理（system prompt 集中维护）
 │   ├── database/
 │   │   ├── models.py        # SQLAlchemy 模型（BillRecord, Category）
 │   │   ├── db.py            # 数据库连接
@@ -142,8 +174,8 @@ smart-bill/
 │       │   ├── components/  # 通用/业务组件
 │       │   ├── stores/      # Pinia 状态管理
 │       │   ├── api/         # axios 请求封装
-│       │   ├── router/      # 路由配置
-│       │   └── types/       # TypeScript 类型
+│       │   ├── router/      # 路由配置       │   ├── utils/
+       │   │   └── cycle.ts # 月度周期日期计算工具│       │   └── types/       # TypeScript 类型
 │       ├── package.json
 │       └── vite.config.ts   # Vite 配置（含后端代理）
 ├── scripts/
