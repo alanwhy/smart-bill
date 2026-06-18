@@ -7,34 +7,16 @@ from typing import Optional
 import dashscope
 from dashscope import MultiModalConversation
 
+from backend.config import settings
 from backend.core.exceptions import FileError, QwenAPIError, ValidationError
+from backend.services.prompts import BILL_RECOGNITION_SYSTEM_PROMPT, BILL_RECOGNITION_USER_PROMPT
 from backend.utils import qwen_logger as _log
 
 
 class QwenVisionService:
     """Qwen3-VL-Plus 服务封装"""
 
-    # 精细化提示词
-    SYSTEM_PROMPT = """你是一个专业的账单/收据识别专家。你的任务是从图片中提取账单信息并以 JSON 格式返回。
-
-【输出规则】
-- 必须且只能返回一个 JSON 对象，不得包含任何其他文字、解释、markdown 代码块
-- 即使图片不清晰或不是标准账单，也必须尝试提取，实在无法识别时返回 {"items": []}
-
-【JSON 结构】
-{"items": [{"merchant_name": "商户名", "amount": 金额数字, "date": "YYYY-MM-DD HH:MM:SS", "category": "分类"}]}
-
-【字段说明】
-- merchant_name: 商户/店铺名称，字符串
-- amount: 消费金额，纯数字（不含¥符号），必须大于0
-- date: 交易日期，格式 YYYY-MM-DD HH:MM:SS，无时间信息则用 00:00:00，无日期则用今天
-- category: 从以下选项中选择一个：餐饮、交通、购物、娱乐、医疗、住房、其他
-
-【示例输出】
-{"items": [{"merchant_name": "麦当劳", "amount": 35.5, "date": "2026-06-17 12:30:00", "category": "餐饮"}]}"""
-
-    SUPPORTED_FORMATS = {"image/jpeg", "image/png"}
-    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    SYSTEM_PROMPT = BILL_RECOGNITION_SYSTEM_PROMPT
 
     def __init__(self):
         """初始化 Qwen 服务"""
@@ -53,13 +35,14 @@ class QwenVisionService:
 
         # 检查文件大小
         file_size = os.path.getsize(image_path)
-        if file_size > self.MAX_FILE_SIZE:
-            raise FileError(f"Image file too large: {file_size} bytes (max: {self.MAX_FILE_SIZE})")
+        if file_size > settings.max_image_size:
+            raise FileError(f"Image file too large: {file_size} bytes (max: {settings.max_image_size})")
 
         # 检查文件格式
         ext = os.path.splitext(image_path)[1].lower()
-        if ext not in [".jpg", ".jpeg", ".png"]:
-            raise FileError(f"Unsupported image format: {ext} (supported: jpg, png)")
+        if ext not in settings.supported_image_extensions:
+            supported = ", ".join(settings.supported_image_extensions)
+            raise FileError(f"Unsupported image format: {ext} (supported: {supported})")
 
     def _encode_image_to_base64(self, image_path: str) -> str:
         """将图片编码为 base64"""
@@ -81,7 +64,7 @@ class QwenVisionService:
 
             # 调用 Qwen API
             response = MultiModalConversation.call(
-                model="qwen3.7-plus",
+                model=settings.qwen_model,
                 messages=[
                     {
                         "role": "system",
@@ -91,7 +74,7 @@ class QwenVisionService:
                         "role": "user",
                         "content": [
                             {"type": "image", "image": f"data:{mime_type};base64,{image_base64}"},
-                            {"type": "text", "text": "请识别这张账单/收据图片，直接输出 JSON，需要包含字段商户名称、金额、日期（格式：YYYY-MM-DD 或 YYYY-MM-DD HH:MM:SS）、分类（可选）、备注（可选），不要加任何其他文字。"},
+                            {"type": "text", "text": BILL_RECOGNITION_USER_PROMPT},
                         ],
                     },
                 ],

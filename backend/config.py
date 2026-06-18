@@ -24,6 +24,11 @@ class Settings(BaseSettings):
 
     # Qwen API 配置
     qwen_api_key: str = ""
+    qwen_model: str = "qwen3.7-plus"
+
+    # 图片上传限制
+    max_image_size: int = 10 * 1024 * 1024  # 10MB
+    supported_image_extensions: List[str] = [".jpg", ".jpeg", ".png"]
 
     # 日志配置
     log_level: str = "INFO"
