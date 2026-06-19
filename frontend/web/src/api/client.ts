@@ -1,5 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 import type { ApiResponse } from "@/types/bill";
+import { useAuthStore } from "@/stores/auth";
+import router from "@/router";
 
 const client: AxiosInstance = axios.create({
   baseURL: "/api/v1",
@@ -28,10 +30,8 @@ client.interceptors.response.use(
     if (data.code === 401) {
       const hasToken = !!localStorage.getItem("token");
       if (hasToken) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("username");
-        window.location.href = "/login";
+        useAuthStore().logout();
+        router.push({ name: "Login" });
         return Promise.reject(new Error("登录已过期，请重新登录"));
       }
       const errorMsg = data.msg || "用户名或密码错误";
@@ -54,10 +54,8 @@ client.interceptors.response.use(
     if (error.response?.status === 401) {
       const hasToken = !!localStorage.getItem("token");
       if (hasToken) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("username");
-        window.location.href = "/login";
+        useAuthStore().logout();
+        router.push({ name: "Login" });
         return Promise.reject(new Error("登录已过期，请重新登录"));
       }
     }
