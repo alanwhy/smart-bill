@@ -63,11 +63,11 @@ rsync -az \
 # Step 2：构建并启动前端容器
 info "构建前端镜像并启动容器..."
 ssh_cmd "cd $REMOTE_DIR && \
-  (docker compose -f $COMPOSE_FILE stop frontend 2>/dev/null || \
+  (docker compose -f $COMPOSE_FILE --env-file .env stop frontend 2>/dev/null || \
    docker-compose -f $COMPOSE_FILE stop frontend 2>/dev/null || true) && \
-  (docker compose -f $COMPOSE_FILE build frontend || \
+  (docker compose -f $COMPOSE_FILE --env-file .env build frontend || \
    docker-compose -f $COMPOSE_FILE build frontend) && \
-  (docker compose -f $COMPOSE_FILE up -d frontend || \
+  (docker compose -f $COMPOSE_FILE --env-file .env up -d frontend || \
    docker-compose -f $COMPOSE_FILE up -d frontend)"
 
 # Step 3：健康检查（等待最多 60 秒）

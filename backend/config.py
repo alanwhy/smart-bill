@@ -1,7 +1,5 @@
 """应用配置"""
 
-from typing import List
-
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
@@ -28,23 +26,37 @@ class Settings(BaseSettings):
 
     # 图片上传限制
     max_image_size: int = 10 * 1024 * 1024  # 10MB
-    supported_image_extensions: List[str] = [".jpg", ".jpeg", ".png"]
+    supported_image_extensions: str = ".jpg,.jpeg,.png"
 
     # 日志配置
     log_level: str = "INFO"
 
-    # CORS 配置
-    cors_origins: List[str] = [
-        "http://localhost:3000",
-        "http://localhost:8080",
-        "http://localhost",
-        "http://127.0.0.1",
-    ]
+    # CORS 配置（逗号分隔字符串，应用层解析为列表）
+    cors_origins: str = "http://localhost:3000,http://localhost:8080,http://localhost,http://127.0.0.1"
+
+    @property
+    def cors_origins_list(self) -> list:
+        import json
+        v = self.cors_origins.strip()
+        if v.startswith("["):
+            try:
+                return json.loads(v)
+            except Exception:
+                v = v.strip("[]")
+        return [item.strip().strip('"\'') for item in v.split(",") if item.strip()]
+
+    @property
+    def supported_extensions_list(self) -> list:
+        return [item.strip() for item in self.supported_image_extensions.split(",") if item.strip()]
 
     class Config:
         case_sensitive = False
         env_file = ".env"
         extra = "ignore"
+
+
+# 全局设置实例
+settings = Settings()
 
 
 # 全局设置实例

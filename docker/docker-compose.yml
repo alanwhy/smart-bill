@@ -13,7 +13,7 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - DATABASE_URL=sqlite:////app/data/smart_bill.db
-      - CORS_ORIGINS=${CORS_ORIGINS:-["http://localhost:5173"]}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173}
       - HOST=0.0.0.0
       - PORT=8000
     volumes:

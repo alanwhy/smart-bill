@@ -41,8 +41,8 @@ class QwenVisionService:
 
         # 检查文件格式
         ext = os.path.splitext(image_path)[1].lower()
-        if ext not in settings.supported_image_extensions:
-            supported = ", ".join(settings.supported_image_extensions)
+        if ext not in settings.supported_extensions_list:
+            supported = ", ".join(settings.supported_extensions_list)
             raise FileError(f"Unsupported image format: {ext} (supported: {supported})")
 
     def _encode_image_to_base64(self, image_path: str) -> str:
