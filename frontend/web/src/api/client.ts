@@ -23,13 +23,19 @@ client.interceptors.response.use(
   (response: AxiosResponse) => {
     const data = response.data as ApiResponse;
 
-    // 401 时清除 token 并跳转登录页
+    // 401 时：仅在已登录状态（本地有 token）才视为"登录过期"并跳转；
+    // 否则（如登录接口本身返回 401）直接抛错给调用方显示提示。
     if (data.code === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("username");
-      window.location.href = "/login";
-      return Promise.reject(new Error("登录已过期，请重新登录"));
+      const hasToken = !!localStorage.getItem("token");
+      if (hasToken) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("username");
+        window.location.href = "/login";
+        return Promise.reject(new Error("登录已过期，请重新登录"));
+      }
+      const errorMsg = data.msg || "用户名或密码错误";
+      return Promise.reject(new Error(errorMsg));
     }
 
     // 如果 code 不为 0，视为错误
@@ -46,13 +52,16 @@ client.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("username");
-      window.location.href = "/login";
-      return Promise.reject(new Error("登录已过期，请重新登录"));
+      const hasToken = !!localStorage.getItem("token");
+      if (hasToken) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("username");
+        window.location.href = "/login";
+        return Promise.reject(new Error("登录已过期，请重新登录"));
+      }
     }
-    const message = error.response?.data?.msg || error.message || "网络错误，请重试";
+    const message = error.response?.data?.msg || error.response?.data?.detail || error.message || "网络错误，请重试";
     return Promise.reject(new Error(message));
   },
 );
