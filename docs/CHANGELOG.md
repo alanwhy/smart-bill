@@ -1,4 +1,50 @@
-# 更新日志
+# Changelog
+
+所有前端版本变更记录。格式遵循 [Conventional Commits](https://conventionalcommits.org/)。
+
+## 0.5.0 (2026-06-19)
+
+
+### ✨ 新功能
+
+* add category management feature ([7cc2e0d](https://github.com/alanwhy/smart-bill/commit/7cc2e0d45b701e42cdf8b4afd383745be8208ad6))
+* add user role and password change requirements ([9353812](https://github.com/alanwhy/smart-bill/commit/9353812bca254ed0632f4bed435b10e2e34040bd))
+* 优化模态框和过渡效果，提升用户体验 ([5cf0859](https://github.com/alanwhy/smart-bill/commit/5cf08592a46ef691193358978eb1b09b1ec2d8f8))
+* 优化用户页面数据管理区域的样式和布局，提升导入导出功能的用户体验 ([0b04cc2](https://github.com/alanwhy/smart-bill/commit/0b04cc2c0a9d4b57eeb93c7050ba30b97df5041e))
+* 优化视口设置和主内容区域样式，增强移动端适配性 ([7337e1e](https://github.com/alanwhy/smart-bill/commit/7337e1ebe0ea6a0b35633ff15ef4139f3e651b63))
+* 优化移动端和桌面端的用户体验，添加左滑操作按钮和窄屏提示 Banner ([112c394](https://github.com/alanwhy/smart-bill/commit/112c3944dd34c369d95507d95059e85988025b1b))
+* 优化移动端模态框样式和交互，支持下滑关闭和拖动关闭功能 ([4925fd8](https://github.com/alanwhy/smart-bill/commit/4925fd84605c20a8f1caa4e51e6130654efc968b))
+* 初始化 Vue 3 前端项目 - Smart Bill Web 应用 ([9a07793](https://github.com/alanwhy/smart-bill/commit/9a07793ea427562f947f4f40fe89d7d6f305e779))
+* 实现 Smart Bill 核心后端服务 ([fa51093](https://github.com/alanwhy/smart-bill/commit/fa51093b8f54c8f31e3bd16f13ed5437ecfc9583))
+* 实现账单上传并发处理，添加占位符功能以优化用户体验 ([74faaf8](https://github.com/alanwhy/smart-bill/commit/74faaf89027d9684c23ee757f04c1bf9b0297383))
+* 将标题链接化，增强用户导航体验 ([a02dfef](https://github.com/alanwhy/smart-bill/commit/a02dfefff230a916fdc331d93e8bde6cf116cb09))
+* 更新文档，添加前端 README 和架构设计说明，优化部署脚本和环境变量配置 ([f48562c](https://github.com/alanwhy/smart-bill/commit/f48562ca8c295c81f7cf6e6fdb2787ec3ab3570c))
+* 更新文档，添加手动创建账单和月度账单周期设置功能说明 ([ae162c6](https://github.com/alanwhy/smart-bill/commit/ae162c6ee47b0832f61f828dda3be9009b44bbb3))
+* 更新文档，添加生产环境部署说明，简化数据模型，移除账单记录中的图片路径字段 ([5890c3b](https://github.com/alanwhy/smart-bill/commit/5890c3befe359aff17dcb49747a5c496657df8e2))
+* 更新文档，添加用户认证和分类管理API说明，优化架构设计描述 ([2c54bee](https://github.com/alanwhy/smart-bill/commit/2c54beee8bf6bad9ceea7205dbb258b6a3e572e8))
+* 更新文档，统一使用“千问模型”描述，优化相关文件中的模型名称 ([d273ffa](https://github.com/alanwhy/smart-bill/commit/d273ffacbe2a51f7786f8d7b838aa3527fdd52bc))
+* 更新环境变量配置，移除 .env.production，优化生产部署流程 ([908158a](https://github.com/alanwhy/smart-bill/commit/908158a9e9dc94d82c4feaa3631f7235ffb58034))
+* 更新账单模型和解析逻辑，支持收支类型区分，优化用户体验 ([54f77bd](https://github.com/alanwhy/smart-bill/commit/54f77bda258eaf2d2519d910f1aaf8bde822787c))
+* 添加 Docker 配置和完成文档 ([a24c5ff](https://github.com/alanwhy/smart-bill/commit/a24c5ff3e2cc80cee4527b2f9aedaef577676f1f))
+* 添加 Qwen API 配置和提示词管理，优化账单识别功能 ([8efae57](https://github.com/alanwhy/smart-bill/commit/8efae571ba10bdc2d3c429b4067dd091bcc1edff))
+* 添加 Toast 组件以显示错误提示，优化用户体验 ([76f2ffe](https://github.com/alanwhy/smart-bill/commit/76f2ffe345f991cdebe5e2d6d873aed20427c26d))
+* 添加一键重启 Smart Bill 前后端开发服务器脚本 ([2e108a7](https://github.com/alanwhy/smart-bill/commit/2e108a7e0d8a6baaea41018db97aab9fe9264d82))
+* 添加前端 Dockerfile、Nginx 配置和一键部署脚本，优化前端部署流程 ([71f692b](https://github.com/alanwhy/smart-bill/commit/71f692bfd951ea40634a32de90580466c866a6cf))
+* 添加手动创建账单功能，更新相关数据模型和 API 接口 ([4f1618e](https://github.com/alanwhy/smart-bill/commit/4f1618e9224bf6ca63894f92bf41e00a9987beae))
+* 添加批量导入账单功能，更新相关数据模型和接口，优化导入导出 Excel 的工具函数 ([63d6387](https://github.com/alanwhy/smart-bill/commit/63d63878a7106b9f67d1d6f4dd63fdd5188adf20))
+* 添加更新文档技能，支持自动同步文档与代码变更 ([7feed81](https://github.com/alanwhy/smart-bill/commit/7feed81f056f1f88a19b2f3912b1ccf9f160b7a3))
+* 添加生产环境变量配置，更新 Docker 和部署脚本，优化开发和部署流程 ([5280657](https://github.com/alanwhy/smart-bill/commit/528065773467cf436c258a9134c1de787aaeaa70))
+* 添加用户月度账单周期设置功能，支持获取和更新周期起始日 ([25f3b8d](https://github.com/alanwhy/smart-bill/commit/25f3b8d1809d0965d26a58e2873f184ea6a2edd3))
+* 添加账单备注功能，支持在账单中记录描述信息 ([94c31d7](https://github.com/alanwhy/smart-bill/commit/94c31d79c6151fa9a8ebbb06862f48cf821e8aea))
+* 移除账单记录和创建账单接口中的图片路径字段，简化数据模型 ([952f931](https://github.com/alanwhy/smart-bill/commit/952f9315d7b37036909b9118b6f9ce26f937acc1))
+
+
+### 🐛 Bug 修复
+
+* 删除不再需要的设置文件，清理项目结构 ([ffe9957](https://github.com/alanwhy/smart-bill/commit/ffe99576f6b691aeef9b53da58ccac4011aa972b))
+* 改进前端上传错误提示，显示详细错误信息 ([c2d5590](https://github.com/alanwhy/smart-bill/commit/c2d5590524b0cacacbbd3f32926ceeedaec2c212))
+* 更新删除分类时的错误提示信息，支持中文显示 ([994ac50](https://github.com/alanwhy/smart-bill/commit/994ac503ff5a905319096c8f9ae405d43a210fef))
+* 更新账单解析器以记录 Qwen 响应和解析错误，优化用户调试体验 ([85d536c](https://github.com/alanwhy/smart-bill/commit/85d536c6a21a15ecb27052fda0c16d7d636bde56))
 
 ## [0.5.0] - 2026-06-18
 
