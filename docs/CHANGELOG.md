@@ -2,6 +2,20 @@
 
 所有前端版本变更记录。格式遵循 [Conventional Commits](https://conventionalcommits.org/)。
 
+## [0.6.0](https://github.com/alanwhy/smart-bill/compare/v0.5.0...v0.6.0) (2026-06-19)
+
+
+### ✨ 新功能
+
+* 优化配置管理，支持 CORS 和图片扩展名的字符串解析；更新 Docker Compose 配置以简化环境变量设置 ([e33bb47](https://github.com/alanwhy/smart-bill/commit/e33bb4722305fed9dd9d5fb5026bcb3ef8ba8e4f))
+* 更新应用名称为“爱理财”，优化页面标题和描述；调整样式和动画效果 ([5138825](https://github.com/alanwhy/smart-bill/commit/5138825095eaa079b4617bc51de86c5b9ea60540))
+* 添加用户角色与权限系统，支持用户管理和强制改密功能；实现批量导入账单功能，优化移动端体验 ([e85c844](https://github.com/alanwhy/smart-bill/commit/e85c844232a349abe17949b18c7885bc4f245d59))
+
+
+### 🐛 Bug 修复
+
+* 优化 401 错误处理逻辑，仅在已登录状态下清除 token 并跳转登录页 ([58f82c9](https://github.com/alanwhy/smart-bill/commit/58f82c9e05abd84ef391e3c0522106224e006860))
+
 ## [0.6.0] - 2026-06-19
 
 ### 已实现
