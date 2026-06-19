@@ -12,6 +12,10 @@
 - 账单备注功能
 - 用户认证（JWT）
 - **月度账单周期自定义**（起始日 1-28 可配置）
+- **批量导入/导出账单**（Excel 格式，含模板下载）
+- **用户角色权限**（admin / user），管理员可管理用户账号
+- **强制改密**（首次登录或被重置密码后）
+- **移动端左滑操作**（编辑/删除按鈕）
 - 响应式 Web 前端（PC 侧边栏 / 移动端底部导航）
 
 ## 技术栈
@@ -91,17 +95,17 @@ bash scripts/deploy_frontend.sh
 ```
 smart-bill/
 ├── backend/          # FastAPI 后端
-│   ├── api/          # 路由（bills, categories, auth）
+│   ├── api/          # 路由（bills, categories, auth, users）
 │   ├── services/     # 业务逻辑（qwen, parser, auth, prompts）
 │   ├── database/     # ORM 模型和 CRUD
 │   ├── core/         # Pydantic 模型和枚举
 │   └── utils/        # 工具函数和日志
 ├── frontend/web/     # Vue 3 前端
 │   └── src/
-│       ├── pages/    # 页面（Dashboard, Login, Categories, Settings...）
+│       ├── pages/    # 页面（Dashboard, Login, Categories, Settings, UserPage, UsersAdmin, ForceChangePassword）
 │       ├── components/  # 组件（BillCard, Toast, ConfirmDialog...）
 │       ├── stores/   # Pinia 状态（auth, bills, categories）
-│       ├── utils/    # 工具（cycle.ts 周期日期计算）
+│       ├── utils/    # 工具（cycle.ts 周期日期 / excel.ts 导入导出 / useDevice.ts）
 │       └── api/      # axios 请求封装
 ├── docker/           # Docker 配置（生产环境）
 │   ├── Dockerfile          # 后端镜像
@@ -131,7 +135,6 @@ smart-bill/
 ## 后续计划
 
 - [ ] 账单统计分析与趋势图表
-- [ ] 报表导出（PDF/Excel）
 - [ ] 定时备份脚本
 - [ ] 认证中间件强制校验所有账单端点
 

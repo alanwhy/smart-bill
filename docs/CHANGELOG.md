@@ -2,7 +2,41 @@
 
 所有前端版本变更记录。格式遵循 [Conventional Commits](https://conventionalcommits.org/)。
 
-## 0.5.0 (2026-06-19)
+## [0.6.0] - 2026-06-19
+
+### 已实现
+
+- [x] Phase 21：用户角色与权限系统
+  - **`role` 字段**：`users` 表新增 `role`（`admin` / `user`，默认 `user`）和 `must_change_password`（布尔，默认 `false`）列
+  - **`ForceChangePasswordPage.vue`**：首次登录（或被管理员重置密码后）强制改密页面，改密成功后自动跳转
+  - **`UsersAdminPage.vue`**：管理员专属用户管理页，支持新增用户、修改用户名（不能改自己）、重置密码（生成临时密码）
+  - **后端 `backend/api/users.py`**：`GET /api/v1/users`、`POST /api/v1/users`、`PUT /api/v1/users/{id}/username`、`POST /api/v1/users/{id}/reset-password`，均需 `admin` 角色
+  - **`require_admin` 依赖**：`auth.py` 新增，自动校验当前用户 role
+  - **`auth_service.generate_temp_password()`**：生成临时密码工具函数
+  - **路由守卫扩展**：`router/index.ts` 新增 `/users/admin`（需 admin）和 `/force-change-password` 路由，登录后自动检测 `must_change_password`
+  - **`scripts/migrate_user_system.py`**：存量用户数据迁移脚本（添加 role/must_change_password 列，设置种子 admin 账号）
+  - `seed.py` 新增预设 admin 用户（首次启动强制改密）
+
+- [x] Phase 22：批量导入账单（Excel）
+  - **`frontend/web/src/utils/excel.ts`**：完整 Excel 工具库，含 `downloadTemplate()`（带示例数据和字段说明的模板下载）、`exportBillsToExcel()`（账单导出）、`parseBillsFromExcel()`（Excel 解析与字段校验）
+  - **`POST /api/v1/bills/batch`**：批量创建账单端点（`BatchCreateBillRequest`，接受账单数组，事务性写入）
+  - **`UserPage.vue`** 数据管理区域：导出全部账单为 Excel、上传 Excel 导入、模板下载，新增专属样式布局
+  - `frontend/web/package.json` 新增 `xlsx` 依赖
+  - Excel 列定义：金额 | 商家名称 | 交易日期 | 分类名称 | 备注
+  - 导入时匹配分类名称（须与系统分类完全一致），校验金额非零、商户名不空、日期格式 `YYYY-MM-DD`
+
+- [x] Phase 23：移动端体验优化
+  - **左滑操作按钮**：`BillCard.vue` 支持移动端左滑显示编辑/删除按钮，touch 事件精准计算滑动距离
+  - **窄屏提示 Banner**：`DashboardPage.vue` 屏幕宽度 < 375px 时展示引导提示
+  - **`useDevice.ts`**：设备检测工具（`isMobile`、`isNarrow`、视口宽度响应式），供组件按需调用
+  - 下滑关闭模态框：移动端模态框支持 touch 拖动和下滑手势关闭
+  - 视口优化：`index.html` 禁止用户缩放，`main.css` 优化主内容区滚动
+
+_last commit: `9c90330b97f8e8104d5acefae15ea9cd0c408293`_
+
+---
+
+## [0.5.0] - 2026-06-19
 
 
 ### ✨ 新功能

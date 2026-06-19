@@ -64,8 +64,9 @@ src/
 ├── api/               # 后端 API 调用服务
 │   ├── client.ts      # Axios 实例（含 JWT 拦截器）
 │   ├── auth.ts        # 认证 API（登录/获取用户/周期设置）
-│   ├── bills.ts       # 账单 API（上传/创建/查询/编辑/删除）
-│   └── categories.ts  # 分类 API（CRUD）
+│   ├── bills.ts       # 账单 API（上传/创建/批量/查询/编辑/删除）
+│   ├── categories.ts  # 分类 API（CRUD）
+│   └── users.ts       # 用户管理 API（列表/创建/改名/重置密码）
 ├── stores/            # Pinia 状态管理
 │   ├── auth.ts        # 用户认证状态（token/userId/cycleStartDay）
 │   ├── bills.ts       # 账单列表状态
@@ -85,12 +86,16 @@ src/
 │   ├── LoginPage.vue        # 登录页
 │   ├── CategoriesPage.vue   # 分类管理
 │   ├── SettingsPage.vue     # 设置页（月度周期起始日）
-│   └── UserPage.vue         # 用户信息（修改密码）
+│   ├── UserPage.vue         # 用户信息（修改密码/Excel 导入导出）
+│   ├── UsersAdminPage.vue   # 用户管理（仅 admin）
+│   └── ForceChangePasswordPage.vue  # 强制改密页（首次登录/重置密码后）
 ├── router/            # 路由配置（含认证守卫）
 ├── types/             # TypeScript 类型定义
 │   └── bill.ts        # 账单、分类 TS 类型
 ├── utils/             # 工具函数
-│   └── cycle.ts       # 月度周期日期计算（getCycleDates）
+│   ├── cycle.ts       # 月度周期日期计算（getCycleDates）
+│   ├── excel.ts       # Excel 导入/导出工具（downloadTemplate/exportBills/parseBills）
+│   └── useDevice.ts   # 设备检测工具（isMobile/isNarrow）
 └── styles/            # 全局样式
     └── main.css       # Tailwind 指令 + 自定义组件类
 ```
@@ -128,6 +133,16 @@ src/
 ### 7. 认证
 - JWT token 登录，存储于 `localStorage`
 - 路由守卫拦截未登录访问，自动跳转到 `/login`
+- 首次登录或被重置密码后，自动强制跳转到 `/force-change-password`
+
+### 8. 用户管理（仅 admin）
+- 管理员可新增用户、修改用户名、重置密码
+- 新用户默认 `must_change_password=true`，首次登录强制改密
+- admin 不能修改自己的用户名
+
+### 9. 批量导入 / 导出
+- `UserPage.vue` 提供 Excel 模板下载、模板导入、全量导出
+- 导入校验：金额非雰、商户名不空、日期格式 `YYYY-MM-DD`、分类名称匹配已有分类
 
 ## 设计系统
 

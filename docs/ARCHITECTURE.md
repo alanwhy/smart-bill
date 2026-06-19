@@ -8,7 +8,7 @@
 - 处理 HTTP 请求/响应
 - 参数验证和错误处理
 - CORS 和中间件配置
-- 文件：`bills.py`、`categories.py`、`auth.py`、`routes.py`
+- 文件：`bills.py`、`categories.py`、`auth.py`、`users.py`、`routes.py`
 
 #### 2. Service 层 (`backend/services/`)
 - 核心业务逻辑
@@ -39,12 +39,12 @@
 
 技术栈：**Vue 3 + TypeScript + Vite + Tailwind CSS + Pinia**
 
-- **pages/** - 页面组件：DashboardPage、LoginPage、CategoriesPage、SettingsPage、UserPage
+- **pages/** - 页面组件：DashboardPage、LoginPage、CategoriesPage、SettingsPage、UserPage、UsersAdminPage、ForceChangePasswordPage
 - **components/bills/** - 账单相关组件：BillCard、BillEditModal、BillFilters、BillUploadModal
 - **components/common/** - 通用组件：Toast（通知）、ConfirmDialog（确认框）
 - **stores/** - Pinia 状态管理：auth.ts、bills.ts、categories.ts、ui.ts
 - **api/** - axios 请求封装，Vite 代理到 http://localhost:8000
-- **router/** - Vue Router，含受保护路由（需登录）
+- **router/** - Vue Router，含受保护路由（需登录）、admin 专属路由、强制改密跳转
 
 响应式设计：PC 侧边栏导航 / 移动端底部导航
 
@@ -72,6 +72,8 @@ User(
   id: int,
   username: str,
   hashed_password: str,
+  role: str,                  # 角色："admin" / "user"(默认)
+  must_change_password: bool, # 是否强制改密（首次登录 / 被重置密码后）
   cycle_start_day: int,       # 月度账单周期起始日（1-28，默认 1）
   created_at: datetime,
   updated_at: datetime
@@ -143,9 +145,10 @@ get_current_user() 解码 token，注入用户信息
 smart-bill/
 ├── backend/
 │   ├── api/
-│   │   ├── auth.py          # 认证路由（登录/获取用户/改密码）
+│   │   ├── auth.py          # 认证路由（登录/获取用户/改密码/周期）
 │   │   ├── bills.py         # 账单路由（主入口）
 │   │   ├── categories.py    # 分类路由（CRUD）
+│   │   ├── users.py         # 用户管理路由（仅 admin）
 │   │   └── routes.py        # 路由聚合
 │   ├── services/
 │   │   ├── auth_service.py  # 用户认证逻辑
@@ -173,14 +176,19 @@ smart-bill/
 │       │   ├── components/  # 通用/业务组件
 │       │   ├── stores/      # Pinia 状态管理
 │       │   ├── api/         # axios 请求封装
-│       │   ├── router/      # 路由配置       │   ├── utils/
-       │   │   └── cycle.ts # 月度周期日期计算工具│       │   └── types/       # TypeScript 类型
+│       │   ├── router/      # 路由配置
+│       │   ├── utils/
+│       │   │   ├── cycle.ts      # 月度周期日期计算工具
+│       │   │   ├── excel.ts      # Excel 导入/导出工具
+│       │   │   └── useDevice.ts  # 设备检测工具（isMobile/isNarrow）
+│       │   └── types/       # TypeScript 类型
 │       ├── package.json
 │       └── vite.config.ts   # Vite 配置（含后端代理）
 ├── scripts/
 │   ├── restart.sh           # 一键重启前后端脚本（开发环境）
 │   ├── deploy.sh            # 后端一键生产部署脚本（支持 --init 首次初始化）
-│   └── deploy_frontend.sh   # 前端一键部署脚本（本地构建→rsync→容器）
+│   ├── deploy_frontend.sh   # 前端一键部署脚本（本地构建→rsync→容器）
+│   └── migrate_user_system.py # 用户系统存量数据迁移脚本
 ├── docker/
 │   ├── Dockerfile           # 后端镜像（Python + FastAPI）
 │   ├── Dockerfile.frontend  # 前端镜像（nginx:alpine + 预构建 dist）

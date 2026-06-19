@@ -43,15 +43,20 @@ bash scripts/deploy_frontend.sh      # 前端独立部署（19284 端口）
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| POST | `/api/v1/auth/login` | 登录，返回 JWT token |
+| POST | `/api/v1/auth/login` | 登录，返回 JWT token（含 role/must_change_password） |
 | GET | `/api/v1/auth/me` | 获取当前用户 |
 | POST | `/api/v1/auth/change-password` | 修改密码 |
 | GET/PUT | `/api/v1/auth/cycle` | 月度账单周期起始日（1-28） |
 | POST | `/api/v1/bills/upload` | 上传图片并发识别（multipart） |
 | POST | `/api/v1/bills` | 手动创建账单（JSON） |
+| POST | `/api/v1/bills/batch` | 批量导入账单（JSON 数组） |
 | GET | `/api/v1/bills` | 查询列表（user_id, start_date, end_date, category_id, merchant_name） |
 | PUT/DELETE | `/api/v1/bills/{id}` | 修改/删除账单 |
 | GET/POST/PUT/DELETE | `/api/v1/categories[/{id}]` | 分类 CRUD |
+| GET | `/api/v1/users` | 用户列表（仅 admin） |
+| POST | `/api/v1/users` | 创建用户（仅 admin） |
+| PUT | `/api/v1/users/{id}/username` | 修改用户名（仅 admin，不能改自己） |
+| POST | `/api/v1/users/{id}/reset-password` | 重置用户密码（仅 admin） |
 
 > 完整请求/响应示例见 `docs/API.md`，或访问 http://localhost:8000/docs
 
@@ -61,22 +66,35 @@ bash scripts/deploy_frontend.sh      # 前端独立部署（19284 端口）
 backend/services/prompts.py      # LLM system prompt（集中维护，勿内联）
 backend/services/qwen_vision.py  # Qwen API 调用
 backend/database/crud.py         # 所有数据库操作
+backend/api/users.py             # 用户管理 API（仅 admin）
 frontend/web/src/utils/cycle.ts  # 月度周期日期计算（getCycleDates）
+frontend/web/src/utils/excel.ts  # Excel 导入/导出工具
+frontend/web/src/utils/useDevice.ts  # 设备检测工具
 frontend/web/src/stores/         # auth / bills / categories / ui
+frontend/web/src/pages/UsersAdminPage.vue        # 用户管理页
+frontend/web/src/pages/ForceChangePasswordPage.vue  # 强制改密页
+scripts/migrate_user_system.py   # 存量用户数据迁移脚本
 ```
 
 ## 待完成（下一阶段）
 
 - [ ] 认证中间件强制校验所有账单端点（当前 user_id 由前端传入）
 - [ ] 账单统计分析与趋势图表
-- [ ] 报表导出（PDF/Excel）
 - [ ] 定时备份脚本
 
 ## 已知限制
 
 - `user_id` 未经后端强制校验（安全隐患）
-- 无用户注册（仅预设账户）
+- 无用户注册（仅预设账户 + admin 创建）
 - SQLite 不适合高并发（小规模无影响）
+
+## 提交规范
+
+`feat|fix|docs|refactor|test|chore: <subject>`
+
+---
+
+**最后更新**: 2026-06-19 · **GitHub**: https://github.com/alanwhy/smart-bill
 
 ## 提交规范
 

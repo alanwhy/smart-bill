@@ -25,9 +25,13 @@ Response:
   "data": {
     "token": "eyJ...",
     "user_id": 1,
-    "username": "admin"
+    "username": "admin",
+    "role": "admin",
+    "must_change_password": false
   }
 }
+
+# 若 must_change_password=true，前端应强制跳转到 /force-change-password 页面
 ```
 
 ### 获取当前用户
@@ -238,6 +242,40 @@ Response:
 }
 ```
 
+### 批量导入账单
+```
+POST /bills/batch
+Content-Type: application/json
+
+Body:
+{
+  "user_id": 1,
+  "bills": [
+    {
+      "value": -50.0,
+      "merchant_name": "麦当劳",
+      "transaction_date": "2026-06-18T12:00:00",
+      "category_id": 1,
+      "description": "午饭"
+    },
+    { ... }
+  ]
+}
+
+# 事务性写入：所有账单成功才提交，任一失败则全部回滚
+# category_id 须为已有分类 ID
+
+Response:
+{
+  "code": 0,
+  "msg": "success",
+  "data": [
+    { ...BillRecordInDB },
+    ...
+  ]
+}
+```
+
 ## 分类 API
 
 ### 创建分类
@@ -343,5 +381,98 @@ Response:
 常见错误码：
 - 400: 请求参数错误
 - 401: 未授权（token 无效或已过期）
+- 403: 权限不足（需要 admin 角色）
 - 404: 资源不存在
 - 500: 服务器错误
+
+## 用户管理 API（需 admin 角色）
+
+> 以下接口均需携带 admin 用户的 Bearer token，普通用户访问返回 403。
+
+### 获取用户列表
+```
+GET /users
+Authorization: Bearer <admin-token>
+
+Response:
+{
+  "code": 0,
+  "msg": "success",
+  "data": [
+    {
+      "id": 1,
+      "username": "admin",
+      "role": "admin",
+      "must_change_password": false,
+      "created_at": "2026-06-18T00:00:00"
+    }
+  ]
+}
+```
+
+### 创建用户
+```
+POST /users
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+
+Body:
+{
+  "username": "newuser",
+  "password": "initial_password",
+  "role": "user"
+}
+
+# 新用户默认 must_change_password=true，首次登录强制改密
+
+Response:
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "id": 3,
+    "username": "newuser",
+    "role": "user",
+    "must_change_password": true,
+    "created_at": "2026-06-19T10:00:00"
+  }
+}
+```
+
+### 修改用户名
+```
+PUT /users/{user_id}/username
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+
+Body:
+{
+  "username": "new_username"
+}
+
+# admin 不能修改自己的用户名（返回 403）
+
+Response:
+{
+  "code": 0,
+  "msg": "success",
+  "data": { ...AdminUserBrief }
+}
+```
+
+### 重置用户密码
+```
+POST /users/{user_id}/reset-password
+Authorization: Bearer <admin-token>
+
+# 自动生成临时密码，设置 must_change_password=true
+
+Response:
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "temp_password": "TempXxxx"
+  }
+}
+```
