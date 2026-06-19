@@ -76,7 +76,7 @@
     </aside>
 
     <!-- 主容器 -->
-    <div class="flex flex-col flex-1" :class="{ 'lg:ml-64': authStore.isAuthenticated }">
+    <div class="flex flex-col flex-1 min-w-0 overflow-x-hidden" :class="{ 'lg:ml-64': authStore.isAuthenticated }">
       <!-- Header（移动端，仅登录后显示） -->
       <header
         v-if="authStore.isAuthenticated"
@@ -98,7 +98,7 @@
       </header>
 
       <!-- 主内容区域 -->
-      <main class="flex-1 overflow-y-auto">
+      <main class="flex-1 overflow-y-auto pb-16 lg:pb-0">
         <RouterView v-slot="{ Component }">
           <Transition name="page" mode="out-in">
             <component :is="Component" :key="$route.path" />
@@ -110,7 +110,7 @@
     <!-- 移动底部导航（仅登录后显示） -->
     <nav
       v-if="authStore.isAuthenticated"
-      class="fixed bottom-0 left-0 right-0 lg:hidden bg-surface border-t border-border"
+      class="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-surface border-t border-border"
     >
       <div class="flex items-center justify-around h-16">
         <router-link

@@ -1,5 +1,29 @@
 <template>
   <div class="min-h-full pb-20 lg:pb-0">
+    <!-- 桌面端窗口过窄提示 Banner -->
+    <Transition name="banner">
+      <div
+        v-if="showNarrowBanner"
+        class="flex items-center justify-between gap-3 px-4 py-2 bg-warning/15 border-b border-warning/30 text-warning text-sm"
+      >
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M4.929 4.929l14.142 14.142M12 2a10 10 0 110 20A10 10 0 0112 2z" />
+          </svg>
+          当前窗口较窄，建议放大窗口以获得更好的桌面体验
+        </span>
+        <button
+          @click="dismissNarrowBanner"
+          class="flex-shrink-0 p-1 rounded hover:bg-warning/20 transition-colors"
+          aria-label="关闭提示"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </Transition>
+
     <!-- 顶部操作栏 -->
     <div class="sticky top-0 z-30 bg-surface border-b border-border">
       <div class="px-4 sm:px-6 lg:px-8 py-4 space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
@@ -188,6 +212,18 @@ import BillUploadModal from '@/components/bills/BillUploadModal.vue'
 import BillEditModal from '@/components/bills/BillEditModal.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import Toast from '@/components/common/Toast.vue'
+import { useDevice } from '@/utils/useDevice'
+
+const { isDesktop, isViewportTooSmall } = useDevice()
+// 本会话是否已手动关闭窄屏 Banner
+const narrowBannerDismissed = ref(
+  typeof sessionStorage !== 'undefined' && sessionStorage.getItem('narrowBannerDismissed') === '1'
+)
+const showNarrowBanner = computed(() => isDesktop.value && isViewportTooSmall.value && !narrowBannerDismissed.value)
+function dismissNarrowBanner() {
+  narrowBannerDismissed.value = true
+  sessionStorage.setItem('narrowBannerDismissed', '1')
+}
 
 const billsStore = useBillsStore()
 const uiStore = useUiStore()
@@ -280,3 +316,21 @@ const onBillUpdated = () => {
   editingBill.value = null
 }
 </script>
+
+<style scoped>
+.banner-enter-active,
+.banner-leave-active {
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+  overflow: hidden;
+}
+.banner-enter-from,
+.banner-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+.banner-enter-to,
+.banner-leave-from {
+  max-height: 60px;
+  opacity: 1;
+}
+</style>
