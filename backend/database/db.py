@@ -50,8 +50,19 @@ def get_db() -> Session:
 
 
 def init_db():
-    """初始化数据库：建表 -> 种子默认分类 -> 迁移历史数据"""
+    """初始化数据库：建表 -> 自动迁移缺失列 -> 种子默认分类 -> 迁移历史数据"""
+    # 每条迁移：(table, column, DDL片段)，幂等，新增列时只需追加
+    _COLUMN_MIGRATIONS = [
+        ("bill_records", "description",        "ALTER TABLE bill_records ADD COLUMN description VARCHAR(100) DEFAULT ''"),
+        ("users",        "cycle_start_day",     "ALTER TABLE users ADD COLUMN cycle_start_day INTEGER NOT NULL DEFAULT 1"),
+        ("users",        "role",                "ALTER TABLE users ADD COLUMN role VARCHAR(16) NOT NULL DEFAULT 'user'"),
+        ("users",        "must_change_password", "ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0"),
+        ("categories",   "parent_id",           "ALTER TABLE categories ADD COLUMN parent_id INTEGER REFERENCES categories(id)"),
+    ]
+
     try:
+        from sqlalchemy import inspect, text
+
         from backend.database.models import Base
         from backend.database.seed import (
             backfill_legacy_bill_categories,
@@ -61,53 +72,21 @@ def init_db():
 
         Base.metadata.create_all(bind=engine)
 
-        # 迁移：为旧库添加 description 列（幂等）
+        # 统一迁移：检测列是否存在，不存在则执行 ALTER TABLE
+        inspector = inspect(engine)
         with engine.connect() as conn:
-            try:
-                conn.execute(
-                    __import__("sqlalchemy").text(
-                        "ALTER TABLE bill_records ADD COLUMN description VARCHAR(100) DEFAULT ''"
-                    )
-                )
-                conn.commit()
-            except Exception:
-                pass  # 列已存在则忽略
-
-        # 迁移：为旧库添加 cycle_start_day 列（幂等）
-        with engine.connect() as conn:
-            try:
-                conn.execute(
-                    __import__("sqlalchemy").text(
-                        "ALTER TABLE users ADD COLUMN cycle_start_day INTEGER NOT NULL DEFAULT 1"
-                    )
-                )
-                conn.commit()
-            except Exception:
-                pass  # 列已存在则忽略
-
-        # 迁移：为旧库添加 role 列（幂等）
-        with engine.connect() as conn:
-            try:
-                conn.execute(
-                    __import__("sqlalchemy").text(
-                        "ALTER TABLE users ADD COLUMN role VARCHAR(16) NOT NULL DEFAULT 'user'"
-                    )
-                )
-                conn.commit()
-            except Exception:
-                pass  # 列已存在则忽略
-
-        # 迁移：为旧库添加 must_change_password 列（幂等）
-        with engine.connect() as conn:
-            try:
-                conn.execute(
-                    __import__("sqlalchemy").text(
-                        "ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0"
-                    )
-                )
-                conn.commit()
-            except Exception:
-                pass  # 列已存在则忽略
+            for table, column, ddl in _COLUMN_MIGRATIONS:
+                existing_tables = inspector.get_table_names()
+                if table not in existing_tables:
+                    continue
+                existing_columns = [c["name"] for c in inspector.get_columns(table)]
+                if column not in existing_columns:
+                    try:
+                        conn.execute(text(ddl))
+                        conn.commit()
+                        print(f"  ✓ 迁移：{table}.{column} 已添加")
+                    except Exception as migrate_err:
+                        print(f"  ! 迁移 {table}.{column} 失败（已忽略）: {migrate_err}")
 
         db = SessionLocal()
         try:
