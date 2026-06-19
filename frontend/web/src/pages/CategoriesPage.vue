@@ -2,12 +2,12 @@
   <div class="min-h-full pb-20 lg:pb-0">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- 页面标题 -->
-      <div class="flex items-center justify-between mb-8">
-        <div>
+      <div class="flex items-center justify-between mb-8 gap-3">
+        <div class="min-w-0">
           <h1 class="text-3xl font-bold text-text mb-2">分类管理</h1>
           <p class="text-text-muted">维护账单分类，全部用户共用同一份分类</p>
         </div>
-        <button @click="openCreate" class="btn btn-primary">新建分类</button>
+        <button @click="openCreate" class="btn btn-primary whitespace-nowrap flex-shrink-0">新建分类</button>
       </div>
 
       <!-- 列表 -->
@@ -68,51 +68,78 @@
       </div>
     </div>
 
-    <!-- 编辑/新建模态 -->    <div v-if="modalOpen" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div class="bg-surface rounded-2xl shadow-xl w-full max-w-md">
-        <div class="border-b border-border px-6 py-4 flex items-center justify-between">
-          <h2 class="text-xl font-bold text-text">{{ editingId ? '编辑分类' : '新建分类' }}</h2>
-          <button @click="closeModal" class="p-2 hover:bg-border rounded-lg">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <!-- 编辑/新建模态 -->
+    <Teleport to="body">
+      <!-- 背景蒙层 -->
+      <Transition name="overlay">
+        <div v-if="modalOpen" class="fixed inset-0 z-50 bg-black/50" @click="handleMobileClose" />
+      </Transition>
+      <!-- 模态框（移动端：bottom sheet；PC 端：居中 modal） -->
+      <div v-if="modalOpen" class="fixed inset-0 z-50 flex items-end sm:items-center p-0 sm:p-4 pointer-events-none">
+        <Transition :name="isMobile ? 'slide' : 'modal'" appear>
+          <div v-show="sheetVisible" class="bg-surface w-full pointer-events-auto
+            rounded-t-2xl max-h-[90dvh] flex flex-col overflow-hidden
+            sm:rounded-2xl sm:max-w-md sm:max-h-none sm:flex-none sm:overflow-visible sm:mx-auto shadow-xl"
+            @touchstart.passive="onDragStart"
+            @touchend.passive="onDragEnd"
+          >
+            <!-- 移动端拖动指示条 -->
+            <div
+              class="sm:hidden flex-shrink-0 flex justify-center pt-3 pb-2 cursor-pointer"
+              @click="handleMobileClose"
+            >
+              <div class="w-10 h-1 bg-border rounded-full"></div>
+            </div>
+            <!-- 头部 -->
+            <div class="border-b border-border px-6 py-4 flex-shrink-0 flex items-center justify-between">
+              <h2 class="text-xl font-bold text-text">{{ editingId ? '编辑分类' : '新建分类' }}</h2>
+              <button @click="closeModal" class="hidden sm:block p-2 hover:bg-border rounded-lg transition-colors duration-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-        <div class="p-6 space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-text mb-2">名称</label>
-            <input v-model="form.name" type="text" class="input" placeholder="分类名称" maxlength="50" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-text mb-2">图标 (emoji)</label>
-            <input v-model="form.icon" type="text" class="input" placeholder="🍽️" maxlength="16" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-text mb-2">颜色</label>
-            <div class="flex items-center gap-3">
-              <input v-model="form.color" type="color" class="h-10 w-16 rounded-lg border border-border bg-surface cursor-pointer" />
-              <input v-model="form.color" type="text" class="input flex-1 font-mono text-sm" placeholder="#6B7280" />
+            <!-- 内容（移动端可滚动） -->
+            <div ref="scrollRef" class="p-6 space-y-4 overflow-y-auto flex-1 sm:overflow-visible sm:flex-none">
+              <div>
+                <label class="block text-sm font-medium text-text mb-2">名称</label>
+                <input v-model="form.name" type="text" class="input" placeholder="分类名称" maxlength="50" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-text mb-2">图标 (emoji)</label>
+                <input v-model="form.icon" type="text" class="input" placeholder="🍽️" maxlength="16" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-text mb-2">颜色</label>
+                <div class="flex items-center gap-3">
+                  <input v-model="form.color" type="color" class="h-10 w-16 rounded-lg border border-border bg-surface cursor-pointer" />
+                  <input v-model="form.color" type="text" class="input flex-1 font-mono text-sm" placeholder="#6B7280" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-text mb-2">排序权重</label>
+                <input v-model.number="form.sort_order" type="number" min="0" class="input" placeholder="数值越小越靠前" />
+              </div>
+
+              <div v-if="modalError" class="p-3 bg-error/10 border border-error/30 rounded-lg">
+                <p class="text-sm text-error">{{ modalError }}</p>
+              </div>
+            </div>
+
+            <!-- 底部按钮 -->
+            <div class="border-t border-border px-6 py-4 flex flex-col gap-2 flex-shrink-0 sm:flex-row sm:justify-end">
+              <button @click="handleSubmit" :disabled="isSubmitting" class="btn btn-primary py-3 sm:py-2 text-base sm:text-sm">
+                {{ isSubmitting ? '保存中...' : '保存' }}
+              </button>
+              <button @click="closeModal" :disabled="isSubmitting" class="btn btn-secondary py-3 sm:py-2 text-base sm:text-sm">
+                取消
+              </button>
             </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-text mb-2">排序权重</label>
-            <input v-model.number="form.sort_order" type="number" min="0" class="input" placeholder="数值越小越靠前" />
-          </div>
-
-          <div v-if="modalError" class="p-3 bg-error/10 border border-error/30 rounded-lg">
-            <p class="text-sm text-error">{{ modalError }}</p>
-          </div>
-        </div>
-
-        <div class="border-t border-border px-6 py-4 flex gap-2 justify-end">
-          <button @click="closeModal" :disabled="isSubmitting" class="btn btn-secondary">取消</button>
-          <button @click="handleSubmit" :disabled="isSubmitting" class="btn btn-primary">
-            {{ isSubmitting ? '保存中...' : '保存' }}
-          </button>
-        </div>
+        </Transition>
       </div>
-    </div>
+    </Teleport>
     <!-- 删除确认弹窗 -->
     <ConfirmDialog
       v-if="deletingCategory !== null"
@@ -136,12 +163,16 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useDevice } from '@/utils/useDevice'
 import { useCategoriesStore } from '@/stores/categories'
 import type { Category } from '@/types/bill'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import Toast from '@/components/common/Toast.vue'
 
 const categoriesStore = useCategoriesStore()
+const { isMobile } = useDevice()
+
+const scrollRef = ref<HTMLElement | null>(null)
 
 const categories = computed(() => categoriesStore.sortedCategories)
 const isLoading = computed(() => categoriesStore.isLoading)
@@ -150,6 +181,7 @@ const toastMessage = ref<string | null>(null)
 const deletingCategory = ref<Category | null>(null)
 
 const modalOpen = ref(false)
+const sheetVisible = ref(true)
 const editingId = ref<number | null>(null)
 const isSubmitting = ref(false)
 const modalError = ref('')
@@ -170,9 +202,9 @@ const openCreate = () => {
   form.name = ''
   form.icon = ''
   form.color = '#6B7280'
-  // 新建时让后端默认追加在末尾
   form.sort_order = undefined
   modalError.value = ''
+  sheetVisible.value = true
   modalOpen.value = true
 }
 
@@ -183,12 +215,32 @@ const openEdit = (cat: Category) => {
   form.color = cat.color
   form.sort_order = cat.sort_order
   modalError.value = ''
+  sheetVisible.value = true
   modalOpen.value = true
 }
 
-const closeModal = () => {
+// 移动端：先播放退出动画再关闭；PC 端直接关闭
+function handleMobileClose() {
   if (isSubmitting.value) return
-  modalOpen.value = false
+  if (isMobile.value) {
+    sheetVisible.value = false
+    setTimeout(() => { modalOpen.value = false }, 280)
+  } else {
+    modalOpen.value = false
+  }
+}
+
+const closeModal = () => handleMobileClose()
+
+// touch 拖动下滑关闭：仅当内容已滚到顶部时触发
+let dragStartY = 0
+function onDragStart(e: TouchEvent) {
+  dragStartY = e.touches[0].clientY
+}
+function onDragEnd(e: TouchEvent) {
+  const dy = e.changedTouches[0].clientY - dragStartY
+  const atTop = !scrollRef.value || scrollRef.value.scrollTop === 0
+  if (dy > 60 && atTop) handleMobileClose()
 }
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/
@@ -243,3 +295,6 @@ const confirmDelete = async () => {
   }
 }
 </script>
+
+<style scoped>
+</style>

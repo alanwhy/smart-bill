@@ -4,12 +4,14 @@
     <div class="mb-8 text-center login-brand-appear">
       <div class="flex items-center justify-center gap-2.5 mb-2">
         <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M7 8V6.5C7 5.67 7.67 5 8.5 5h5C14.33 5 15 5.67 15 6.5V8" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/>
+            <rect x="2" y="8" width="20" height="12" rx="3" fill="#F59E0B"/>
+            <rect x="14" y="11" width="6" height="6" rx="3" fill="#92400E"/>
+            <circle cx="17" cy="14" r="1.5" fill="#F59E0B"/>
           </svg>
         </div>
-        <span class="text-2xl font-bold text-primary tracking-tight">Smart Bill</span>
+        <span class="text-2xl font-bold text-primary tracking-tight">爱理财</span>
       </div>
       <p class="text-sm text-text-muted">智能账单识别与管理</p>
     </div>

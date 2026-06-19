@@ -7,7 +7,18 @@
     >
       <div class="p-6 border-b border-border">
         <router-link to="/" class="block">
-          <h1 class="text-2xl font-bold text-primary hover:opacity-80 transition-opacity">Smart Bill</h1>
+          <div class="flex items-center gap-2.5">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <!-- 搭扣 -->
+              <path d="M7 8V6.5C7 5.67 7.67 5 8.5 5h5C14.33 5 15 5.67 15 6.5V8" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/>
+              <!-- 钱包主体（实心填充） -->
+              <rect x="2" y="8" width="20" height="12" rx="3" fill="#F59E0B"/>
+              <!-- 右侧零钱袋（深色凹槽） -->
+              <rect x="14" y="11" width="6" height="6" rx="3" fill="#92400E"/>
+              <circle cx="17" cy="14" r="1.5" fill="#F59E0B"/>
+            </svg>
+            <h1 class="text-2xl font-bold text-primary hover:opacity-80 transition-opacity">爱理财</h1>
+          </div>
         </router-link>
       </div>
       <nav class="flex-1 overflow-y-auto p-4">
@@ -86,7 +97,15 @@
       >
         <div class="flex items-center justify-between h-16 px-4 sm:px-6">
           <router-link to="/" class="block">
-            <h1 class="text-xl font-bold text-primary hover:opacity-80 transition-opacity">Smart Bill</h1>
+            <div class="flex items-center gap-2">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M7 8V6.5C7 5.67 7.67 5 8.5 5h5C14.33 5 15 5.67 15 6.5V8" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round"/>
+                <rect x="2" y="8" width="20" height="12" rx="3" fill="#F59E0B"/>
+                <rect x="14" y="11" width="6" height="6" rx="3" fill="#92400E"/>
+                <circle cx="17" cy="14" r="1.5" fill="#F59E0B"/>
+              </svg>
+              <h1 class="text-xl font-bold text-primary hover:opacity-80 transition-opacity">爱理财</h1>
+            </div>
           </router-link>
           <router-link
             to="/user"
@@ -137,17 +156,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
           </svg>
           <span class="text-xs">分类</span>
-        </router-link>
-        <router-link
-          to="/user"
-          class="flex flex-col items-center justify-center gap-1 flex-1 h-full"
-          :class="$route.path === '/user' ? 'text-primary' : 'text-text-muted'"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-          <span class="text-xs">用户</span>
         </router-link>
         <router-link
           to="/settings"

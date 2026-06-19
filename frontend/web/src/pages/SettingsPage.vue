@@ -40,37 +40,17 @@
         <p v-if="saveSuccess" class="text-xs text-green-500 mt-2">✓ 已保存</p>
       </div>
 
-      <!-- 账单分类 -->
-      <div class="card p-6 mb-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-text">账单分类</h2>
-          <router-link to="/categories" class="btn btn-secondary btn-sm">管理分类</router-link>
-        </div>
-        <p v-if="categoriesStore.isLoading && categories.length === 0" class="text-xs text-text-muted">加载中...</p>
-        <p v-else-if="categories.length === 0" class="text-xs text-text-muted">暂无分类</p>
-        <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <div
-            v-for="cat in categories"
-            :key="cat.id"
-            class="p-4 rounded-lg bg-surface border border-border text-center"
-          >
-            <div class="text-2xl mb-2">{{ cat.icon }}</div>
-            <div class="text-sm text-text-secondary">{{ cat.name }}</div>
-          </div>
-        </div>
-      </div>
-
       <!-- 关于 -->
       <div class="card p-6">
         <h2 class="text-lg font-semibold text-text mb-4">关于</h2>
         <div class="space-y-3 text-sm text-text-secondary">
           <div class="flex justify-between">
             <span>应用名称</span>
-            <span class="text-text">Smart Bill</span>
+            <span class="text-text">爱理财 (AilyCai)</span>
           </div>
           <div class="flex justify-between">
             <span>版本</span>
-            <span class="text-text">0.1.0</span>
+            <span class="text-text">{{ appVersion }}</span>
           </div>
           <div class="flex justify-between">
             <span>描述</span>
@@ -86,6 +66,9 @@
 import { computed, onMounted, ref } from 'vue'
 import { useCategoriesStore } from '@/stores/categories'
 import { useAuthStore } from '@/stores/auth'
+
+declare const __APP_VERSION__: string
+const appVersion = __APP_VERSION__
 
 const categoriesStore = useCategoriesStore()
 const authStore = useAuthStore()

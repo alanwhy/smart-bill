@@ -10,14 +10,14 @@
         <!-- 移动端：全宽、顶部圆角、flex-col 可滚动；PC 端：还原原始居中 modal 样式 -->
         <div v-show="visible" class="bg-surface w-full pointer-events-auto
           rounded-t-2xl max-h-[90dvh] flex flex-col overflow-hidden
-          sm:rounded-2xl sm:max-w-lg sm:max-h-none sm:flex-none sm:overflow-visible sm:mx-auto shadow-xl">
-          <!-- 移动端拖动指示条（点击或下滑可关闭） -->
+          sm:rounded-2xl sm:max-w-lg sm:max-h-none sm:flex-none sm:overflow-visible sm:mx-auto shadow-xl"
+          @touchstart.passive="onDragStart"
+          @touchend.passive="onDragEnd"
+        >
+          <!-- 移动端拖动指示条（点击关闭） -->
           <div
             class="sm:hidden flex-shrink-0 flex justify-center pt-3 pb-2 cursor-pointer"
             @click="handleMobileClose"
-            @touchstart.passive="onDragStart"
-            @touchmove.passive="onDragMove"
-            @touchend.passive="onDragEnd"
           >
             <div class="w-10 h-1 bg-border rounded-full"></div>
           </div>
@@ -36,7 +36,7 @@
           </div>
 
       <!-- 内容（移动端可滚动；PC 端随内容撑高） -->
-      <div class="p-6 space-y-4 overflow-y-auto flex-1 sm:overflow-visible sm:flex-none">
+      <div ref="scrollRef" class="p-6 space-y-4 overflow-y-auto flex-1 sm:overflow-visible sm:flex-none">
         <!-- 金额（负数=支出，正数=收入） -->
         <div>
           <label class="block text-sm font-medium text-text mb-2">
@@ -203,21 +203,23 @@ onMounted(() => {
   categoriesStore.getOrFetch()
 })
 
-// 移动端下滑关闭：先播放 leave 动画（~200ms）再 emit close
+const scrollRef = ref<HTMLElement | null>(null)
+
+// 移动端下滑关闭：先播放 leave 动画（~260ms）再 emit close
 const visible = ref(true)
 function handleMobileClose() {
   if (!isMobile.value) { emit('close'); return }
   visible.value = false
-  setTimeout(() => emit('close'), 260)
+  setTimeout(() => emit('close'), 280)
 }
 
-// touch 拖动下滑关闭
+// touch 拖动下滑关闭：仅当内容已滚到顶部时触发
 let dragStartY = 0
 function onDragStart(e: TouchEvent) { dragStartY = e.touches[0].clientY }
-function onDragMove(_e: TouchEvent) { /* 不需实时跟随 */ }
 function onDragEnd(e: TouchEvent) {
   const dy = e.changedTouches[0].clientY - dragStartY
-  if (dy > 60) handleMobileClose()
+  const atTop = !scrollRef.value || scrollRef.value.scrollTop === 0
+  if (dy > 60 && atTop) handleMobileClose()
 }
 
 const handleSubmit = async () => {
