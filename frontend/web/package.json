@@ -1,6 +1,6 @@
 {
   "name": "smart-bill-web",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite --mode dev",
@@ -8,7 +8,12 @@
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "release": "commit-and-tag-version",
+    "release:patch": "commit-and-tag-version --release-as patch",
+    "release:minor": "commit-and-tag-version --release-as minor",
+    "release:major": "commit-and-tag-version --release-as major",
+    "prepare": "cd ../.. && husky frontend/web/.husky"
   },
   "dependencies": {
     "axios": "^1.6.8",
@@ -20,16 +25,24 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
     "@tailwindcss/forms": "^0.5.7",
     "@vitejs/plugin-vue": "^5.0.4",
     "autoprefixer": "^10.4.17",
+    "commit-and-tag-version": "^12.0.0",
     "eslint": "^8.56.0",
     "eslint-plugin-vue": "^9.20.1",
+    "husky": "^9.0.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.1",
     "terser": "^5.48.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.11",
     "vue-tsc": "^1.8.27"
+  },
+  "commit-and-tag-version": {
+    "infile": "../../docs/CHANGELOG.md",
+    "header": "# Changelog\n\n所有前端版本变更记录。格式遵循 [Conventional Commits](https://conventionalcommits.org/)。\n"
   }
 }

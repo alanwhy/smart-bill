@@ -1,0 +1,94 @@
+#!/usr/bin/env sh
+# pre-push: 根据提交类型自动 bump 版本号
+# - fix:              → patch bump（0.5.0 → 0.5.1）
+# - feat:             → minor bump（0.5.0 → 0.6.0）
+# - BREAKING CHANGE / !:  → 拦截并提示手动处理 major
+
+FRONTEND_DIR="$(git rev-parse --show-toplevel)/frontend/web"
+
+# 检查此次 push 中是否包含前端文件变更
+# 读取 stdin（格式：<local_ref> <local_sha> <remote_ref> <remote_sha>）
+FRONTEND_CHANGED=0
+while IFS=' ' read -r local_ref local_sha remote_ref remote_sha; do
+  # 如果是新分支，remote_sha 为全0
+  if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+    RANGE="$local_sha"
+    CHANGED=$(git diff-tree --no-commit-id -r --name-only "$RANGE" 2>/dev/null | grep "^frontend/" || true)
+  else
+    RANGE="$remote_sha..$local_sha"
+    CHANGED=$(git diff --name-only "$RANGE" 2>/dev/null | grep "^frontend/" || true)
+  fi
+
+  if [ -n "$CHANGED" ]; then
+    FRONTEND_CHANGED=1
+    break
+  fi
+done
+
+# 无前端变更，直接放行
+if [ "$FRONTEND_CHANGED" = "0" ]; then
+  exit 0
+fi
+
+# 获取最新的 commit message（排除 chore(release) 自动提交）
+LAST_COMMIT=$(git log --format="%s" -1 HEAD)
+
+# 检测是否为 breaking change（两种写法）
+IS_BREAKING=0
+if echo "$LAST_COMMIT" | grep -qiE "^[a-z]+(\(.+\))?!:|BREAKING[[:space:]]CHANGE"; then
+  IS_BREAKING=1
+fi
+
+# 检测提交类型
+IS_FEAT=0
+IS_FIX=0
+if echo "$LAST_COMMIT" | grep -qE "^feat(\(.+\))?:"; then
+  IS_FEAT=1
+elif echo "$LAST_COMMIT" | grep -qE "^fix(\(.+\))?:"; then
+  IS_FIX=1
+fi
+
+# Breaking change：阻止 push，提示用户
+if [ "$IS_BREAKING" = "1" ]; then
+  echo ""
+  echo "╔══════════════════════════════════════════════════════════════╗"
+  echo "║           ⚠️  检测到 BREAKING CHANGE（大版本变更）           ║"
+  echo "╠══════════════════════════════════════════════════════════════╣"
+  echo "║  此次提交包含不兼容的破坏性变更，需要手动决定是否升级大版本  ║"
+  echo "║                                                              ║"
+  echo "║  如确认需要 major 版本升级，请依次执行：                     ║"
+  echo "║    cd frontend/web                                           ║"
+  echo "║    npm run release:major                                     ║"
+  echo "║    git push                                                  ║"
+  echo "║                                                              ║"
+  echo "║  如仅修复小问题不需要升级大版本，请修改 commit message       ║"
+  echo "║  移除 BREAKING CHANGE 或 ! 标记后重新提交。                  ║"
+  echo "╚══════════════════════════════════════════════════════════════╝"
+  echo ""
+  exit 1
+fi
+
+# 切换到前端目录执行版本 bump
+cd "$FRONTEND_DIR" || exit 1
+
+if [ "$IS_FEAT" = "1" ]; then
+  echo ""
+  echo "🆕 检测到 feat 提交，自动执行 minor 版本升级..."
+  npm run release:minor -- --no-verify
+  echo "✅ minor 版本升级完成，请重新 push（包含版本 tag）:"
+  echo "   git push --follow-tags"
+  echo ""
+  # 阻止原始 push，要求用户用 --follow-tags 重新 push
+  exit 1
+elif [ "$IS_FIX" = "1" ]; then
+  echo ""
+  echo "🐛 检测到 fix 提交，自动执行 patch 版本升级..."
+  npm run release:patch -- --no-verify
+  echo "✅ patch 版本升级完成，请重新 push（包含版本 tag）:"
+  echo "   git push --follow-tags"
+  echo ""
+  exit 1
+fi
+
+# 其他类型（docs/chore/refactor 等），直接放行
+exit 0
