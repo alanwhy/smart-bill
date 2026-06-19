@@ -6,7 +6,9 @@
       class="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:flex lg:flex-col lg:bg-surface lg:border-r lg:border-border"
     >
       <div class="p-6 border-b border-border">
-        <h1 class="text-2xl font-bold text-primary">Smart Bill</h1>
+        <router-link to="/" class="block">
+          <h1 class="text-2xl font-bold text-primary hover:opacity-80 transition-opacity">Smart Bill</h1>
+        </router-link>
       </div>
       <nav class="flex-1 overflow-y-auto p-4">
         <router-link
@@ -83,7 +85,9 @@
         class="sticky top-0 z-40 border-b border-border bg-surface/80 backdrop-blur-md lg:hidden"
       >
         <div class="flex items-center justify-between h-16 px-4 sm:px-6">
-          <h1 class="text-xl font-bold text-primary">Smart Bill</h1>
+          <router-link to="/" class="block">
+            <h1 class="text-xl font-bold text-primary hover:opacity-80 transition-opacity">Smart Bill</h1>
+          </router-link>
           <router-link
             to="/user"
             class="flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 hover:bg-primary/20 cursor-pointer transition-colors duration-200"
