@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-full pb-20 lg:pb-0">
+  <div class="min-h-full pb-20 lg:pb-0" style="padding-bottom: calc(5rem + env(safe-area-inset-bottom))">
     <!-- 桌面端窗口过窄提示 Banner -->
     <Transition name="banner">
       <div

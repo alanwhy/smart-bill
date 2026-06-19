@@ -102,7 +102,7 @@
       </header>
 
       <!-- 主内容区域 -->
-      <main class="flex-1 overflow-y-auto pb-16 lg:pb-0">
+      <main class="flex-1 overflow-y-auto main-content">
         <RouterView v-slot="{ Component }">
           <Transition name="page" mode="out-in">
             <component :is="Component" :key="$route.path" />
@@ -115,6 +115,7 @@
     <nav
       v-if="authStore.isAuthenticated"
       class="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-surface border-t border-border"
+      style="padding-bottom: env(safe-area-inset-bottom)"
     >
       <div class="flex items-center justify-around h-16">
         <router-link
@@ -190,6 +191,18 @@ onMounted(() => {
   if (authStore.isAuthenticated) {
     categoriesStore.getOrFetch()
   }
+
+  // 临时调试：打印设备信息
+  console.log('[Smart Bill Debug]', {
+    innerWidth: window.innerWidth,
+    innerHeight: window.innerHeight,
+    devicePixelRatio: window.devicePixelRatio,
+    'pointer:coarse': window.matchMedia('(pointer: coarse)').matches,
+    'hover:none': window.matchMedia('(hover: none)').matches,
+    'min-width:1024px (lg)': window.matchMedia('(min-width: 1024px)').matches,
+    isAuthenticated: authStore.isAuthenticated,
+    userAgent: navigator.userAgent,
+  })
 })
 
 // 登录后再加载分类
@@ -202,4 +215,13 @@ watch(
 </script>
 
 <style scoped>
+.main-content {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 1024px) {
+  .main-content {
+    padding-bottom: 0;
+  }
+}
 </style>
