@@ -2,18 +2,32 @@
   <Teleport to="body">
     <!-- 背景蒙层 -->
     <Transition name="overlay">
-      <div class="fixed inset-0 z-50 bg-black/50" @click="emit('close')" />
+      <div v-show="visible" class="fixed inset-0 z-50 bg-black/50" @click="isMobile ? handleMobileClose() : emit('close')" />
     </Transition>
-    <!-- 模态框 -->
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-      <Transition name="modal" appear>
-        <div class="bg-surface rounded-2xl shadow-xl w-full max-w-lg pointer-events-auto">
+    <!-- 模态框（移动端：底部 bottom sheet；PC 端：居中 modal） -->
+    <div class="fixed inset-0 z-50 flex items-end sm:items-center p-0 sm:p-4 pointer-events-none">
+      <Transition :name="isMobile ? 'slide' : 'modal'" appear>
+        <!-- 移动端：全宽、顶部圆角、flex-col 可滚动；PC 端：还原原始居中 modal 样式 -->
+        <div v-show="visible" class="bg-surface w-full pointer-events-auto
+          rounded-t-2xl max-h-[90dvh] flex flex-col overflow-hidden
+          sm:rounded-2xl sm:max-w-lg sm:max-h-none sm:flex-none sm:overflow-visible sm:mx-auto shadow-xl">
+          <!-- 移动端拖动指示条（点击或下滑可关闭） -->
+          <div
+            class="sm:hidden flex-shrink-0 flex justify-center pt-3 pb-2 cursor-pointer"
+            @click="handleMobileClose"
+            @touchstart.passive="onDragStart"
+            @touchmove.passive="onDragMove"
+            @touchend.passive="onDragEnd"
+          >
+            <div class="w-10 h-1 bg-border rounded-full"></div>
+          </div>
           <!-- 头部 -->
-          <div class="border-b border-border px-6 py-4 flex items-center justify-between">
+          <div class="border-b border-border px-6 py-4 sm:flex-shrink-0 flex items-center justify-between">
             <h2 class="text-xl font-bold text-text">{{ mode === 'create' ? '手动录入账单' : '编辑账单' }}</h2>
+            <!-- 关闭按钮仅 PC 端显示；移动端通过下滑遮罩关闭 -->
             <button
               @click="emit('close')"
-              class="p-2 hover:bg-border rounded-lg transition-colors duration-200"
+              class="hidden sm:block p-2 hover:bg-border rounded-lg transition-colors duration-200"
             >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -21,47 +35,18 @@
             </button>
           </div>
 
-      <!-- 内容 -->
-      <div class="p-6 space-y-4">
-        <!-- 收支类型 -->
+      <!-- 内容（移动端可滚动；PC 端随内容撑高） -->
+      <div class="p-6 space-y-4 overflow-y-auto flex-1 sm:overflow-visible sm:flex-none">
+        <!-- 金额（负数=支出，正数=收入） -->
         <div>
-          <label class="block text-sm font-medium text-text mb-2">类型</label>
-          <div class="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              @click="formData.type = 'expense'"
-              :class="[
-                'py-2 rounded-lg border-2 text-sm font-medium transition-all duration-200',
-                formData.type === 'expense'
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border bg-surface text-text-secondary hover:border-primary/50',
-              ]"
-            >
-              支出
-            </button>
-            <button
-              type="button"
-              @click="formData.type = 'income'"
-              :class="[
-                'py-2 rounded-lg border-2 text-sm font-medium transition-all duration-200',
-                formData.type === 'income'
-                  ? 'border-success bg-success/10 text-success'
-                  : 'border-border bg-surface text-text-secondary hover:border-success/50',
-              ]"
-            >
-              收入
-            </button>
-          </div>
-        </div>
-
-        <!-- 金额 -->
-        <div>
-          <label class="block text-sm font-medium text-text mb-2">金额</label>
+          <label class="block text-sm font-medium text-text mb-2">
+            金额
+            <span class="text-xs font-normal text-text-muted ml-1">（负数为支出）</span>
+          </label>
           <input
             v-model.number="formData.amount"
             type="number"
             step="0.01"
-            min="0"
             class="input"
             placeholder="0.00"
           />
@@ -130,20 +115,20 @@
       </div>
 
       <!-- 底部按钮 -->
-      <div class="border-t border-border px-6 py-4 flex gap-2 justify-end">
-        <button
-          @click="emit('close')"
-          :disabled="isSubmitting"
-          class="btn btn-secondary"
-        >
-          取消
-        </button>
+      <div class="border-t border-border px-6 py-4 flex flex-col gap-2 flex-shrink-0 sm:flex-row sm:justify-end">
         <button
           @click="handleSubmit"
           :disabled="isSubmitting"
-          class="btn btn-primary"
+          class="btn btn-primary py-3 sm:py-2 text-base sm:text-sm"
         >
-          {{ isSubmitting ? '保存中...' : (mode === 'create' ? '保存' : '保存修改') }}
+          {{ isSubmitting ? '保存中...' : (mode === 'create' ? '确认录入' : '确认修改') }}
+        </button>
+        <button
+          @click="isMobile ? handleMobileClose() : emit('close')"
+          :disabled="isSubmitting"
+          class="btn btn-secondary py-3 sm:py-2 text-base sm:text-sm"
+        >
+          取消
         </button>
       </div>
         </div>
@@ -153,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useCategoriesStore } from '@/stores/categories'
 import { useAuthStore } from '@/stores/auth'
@@ -177,6 +162,13 @@ const billsStore = useBillsStore()
 const categoriesStore = useCategoriesStore()
 const authStore = useAuthStore()
 
+// 移动端检测：根据视口宽度判断（< 640px 即 Tailwind sm: 断点）
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1024)
+const isMobile = computed(() => windowWidth.value < 640)
+function onResize() { windowWidth.value = window.innerWidth }
+onMounted(() => window.addEventListener('resize', onResize, { passive: true }))
+onUnmounted(() => window.removeEventListener('resize', onResize))
+
 const categories = computed(() => categoriesStore.sortedCategories)
 
 const isSubmitting = ref(false)
@@ -197,7 +189,8 @@ function convertToDatetimeLocal(dateStr: string): string {
 
 const formData = reactive({
   type: (props.bill && props.bill.value > 0 ? 'income' : 'expense') as 'expense' | 'income',
-  amount: props.bill ? Math.abs(props.bill.value) : 0,
+  // 金额保留原始正负号（负=支出）
+  amount: props.bill ? props.bill.value : 0,
   merchant_name: props.bill?.merchant_name ?? '',
   category_id: props.bill?.category_id ?? 0,
   transaction_date: props.bill
@@ -210,6 +203,23 @@ onMounted(() => {
   categoriesStore.getOrFetch()
 })
 
+// 移动端下滑关闭：先播放 leave 动画（~200ms）再 emit close
+const visible = ref(true)
+function handleMobileClose() {
+  if (!isMobile.value) { emit('close'); return }
+  visible.value = false
+  setTimeout(() => emit('close'), 260)
+}
+
+// touch 拖动下滑关闭
+let dragStartY = 0
+function onDragStart(e: TouchEvent) { dragStartY = e.touches[0].clientY }
+function onDragMove(_e: TouchEvent) { /* 不需实时跟随 */ }
+function onDragEnd(e: TouchEvent) {
+  const dy = e.changedTouches[0].clientY - dragStartY
+  if (dy > 60) handleMobileClose()
+}
+
 const handleSubmit = async () => {
   errorMessage.value = ''
 
@@ -218,8 +228,8 @@ const handleSubmit = async () => {
     return
   }
 
-  if (!formData.amount || formData.amount <= 0) {
-    errorMessage.value = '金额必须大于 0'
+  if (!formData.amount || formData.amount === 0) {
+    errorMessage.value = '金额不能为 0'
     return
   }
 
@@ -228,9 +238,8 @@ const handleSubmit = async () => {
     return
   }
 
-  // 根据收支类型决定提交时的正负号
-  const signedValue =
-    formData.type === 'expense' ? -Math.abs(formData.amount) : Math.abs(formData.amount)
+  // 金额直接作为 value（负数=支出，正数=收入）
+  const signedValue = formData.amount
 
   isSubmitting.value = true
 
