@@ -8,7 +8,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from sqlalchemy.orm import Session
 
-from backend.core import BillRecordInDB, BillResponse, CreateBillRequest, UpdateBillRequest
+from backend.core import BatchCreateBillRequest, BillRecordInDB, BillResponse, CreateBillRequest, UpdateBillRequest
 from backend.database import crud, get_db
 from backend.database.db import SessionLocal
 from backend.services import BillProcessor
@@ -164,4 +164,20 @@ def delete_bill(
 
     except Exception as e:
         logger.error(f"Error deleting bill: {str(e)}")
+        return BillResponse(code=getattr(e, "code", 500), msg="error", data={"error": str(e)})
+
+
+@router.post("/batch", response_model=BillResponse)
+def batch_create_bills(
+    request: BatchCreateBillRequest,
+    db: Session = Depends(get_db),
+) -> BillResponse:
+    """批量导入账单（全部验证通过才写入，任一失败则整体回滚）"""
+    try:
+        validate_user_id(request.user_id)
+        created_count = crud.batch_create_bills(db, request.user_id, request.items)
+        return BillResponse(code=0, msg="success", data={"created_count": created_count})
+
+    except Exception as e:
+        logger.error(f"Error batch creating bills: {str(e)}")
         return BillResponse(code=getattr(e, "code", 500), msg="error", data={"error": str(e)})

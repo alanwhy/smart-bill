@@ -1,7 +1,7 @@
 """Pydantic 数据模型和类型定义"""
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -180,6 +180,39 @@ class UpdateBillRequest(BaseModel):
     transaction_date: Optional[str] = Field(default=None, description="交易日期")
     category_id: Optional[int] = Field(default=None, description="分类 ID", ge=1)
     description: Optional[str] = Field(default=None, description="账单备注", max_length=100)
+
+
+class BatchCreateBillItem(BaseModel):
+    """批量导入时单条账单数据"""
+
+    value: float = Field(..., description="金额（负数=支出，正数=收入，不能为 0）")
+    merchant_name: str = Field(..., description="商户名称", min_length=1)
+    transaction_date: str = Field(..., description="交易日期（YYYY-MM-DD）")
+    category_id: int = Field(..., description="分类 ID", ge=1)
+    description: Optional[str] = Field(default=None, description="账单备注", max_length=100)
+
+
+class BatchCreateBillRequest(BaseModel):
+    """批量创建账单请求"""
+
+    user_id: int = Field(..., description="用户 ID", ge=1)
+    items: List[BatchCreateBillItem] = Field(..., description="账单列表", min_length=1)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": 1,
+                "items": [
+                    {
+                        "value": -50.0,
+                        "merchant_name": "麦当劳",
+                        "transaction_date": "2026-06-18",
+                        "category_id": 1,
+                        "description": "午饭",
+                    }
+                ],
+            }
+        }
 
     class Config:
         json_schema_extra = {

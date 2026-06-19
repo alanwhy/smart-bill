@@ -9,6 +9,8 @@ from .exceptions import (
     ValidationError,
 )
 from .models import (
+    BatchCreateBillItem,
+    BatchCreateBillRequest,
     BillItem,
     BillRecordInDB,
     BillResponse,
@@ -40,4 +42,6 @@ __all__ = [
     "CategoryInDB",
     "CreateCategoryRequest",
     "UpdateCategoryRequest",
+    "BatchCreateBillItem",
+    "BatchCreateBillRequest",
 ]

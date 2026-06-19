@@ -1,6 +1,19 @@
 import client from './client'
 import type { BillItem, BillRecord, CreateBillRequest, UpdateBillRequest } from '@/types/bill'
 
+export interface BatchCreateBillItem {
+  value: number
+  merchant_name: string
+  transaction_date: string
+  category_id: number
+  description?: string
+}
+
+export interface BatchCreateBillRequest {
+  user_id: number
+  items: BatchCreateBillItem[]
+}
+
 export const billApi = {
   /**
    * 上传图片识别账单
@@ -72,5 +85,13 @@ export const billApi = {
    */
   async deleteBill(billId: number): Promise<void> {
     await client.delete(`/bills/${billId}`)
+  },
+
+  /**
+   * 批量导入账单
+   */
+  async batchCreateBills(data: BatchCreateBillRequest): Promise<{ created_count: number }> {
+    const response = await client.post('/bills/batch', data)
+    return response
   },
 }

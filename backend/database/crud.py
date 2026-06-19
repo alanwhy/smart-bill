@@ -274,6 +274,38 @@ def delete_bill(db: Session, bill_id: int) -> bool:
         raise DatabaseError(f"Failed to delete bill: {str(e)}")
 
 
+def batch_create_bills(
+    db: Session,
+    user_id: int,
+    items: list,
+) -> int:
+    """批量创建账单，在单事务内完成，任一失败则全部回滚，返回创建数量"""
+    try:
+        records = []
+        for item in items:
+            # 校验分类存在
+            get_category(db, item.category_id)
+            bill = BillRecord(
+                user_id=user_id,
+                merchant_name=item.merchant_name,
+                value=item.value,
+                transaction_date=item.transaction_date,
+                category_id=item.category_id,
+                description=item.description,
+            )
+            records.append(bill)
+
+        db.add_all(records)
+        db.commit()
+        return len(records)
+    except (ResourceNotFoundError, DatabaseError):
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        raise DatabaseError(f"Failed to batch create bills: {str(e)}")
+
+
 # ---------------------------------------------------------------------------
 # User CRUD
 # ---------------------------------------------------------------------------

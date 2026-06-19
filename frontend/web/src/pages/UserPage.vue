@@ -34,7 +34,7 @@
       </div>
 
       <!-- 修改密码 -->
-      <div class="card p-6">
+      <div class="card p-6 mb-6">
         <h2 class="text-lg font-semibold text-text mb-4">修改密码</h2>
         <form @submit.prevent="handleChangePassword" class="space-y-4">
           <div>
@@ -79,19 +79,162 @@
         </form>
         <p class="text-xs text-text-muted mt-4">修改密码成功后将自动退出登录，请使用新密码重新登录。</p>
       </div>
+
+      <!-- 数据管理（仅 PC 端） -->
+      <div v-if="isDesktop" class="card p-6">
+        <h2 class="text-lg font-semibold text-text mb-6">数据管理</h2>
+
+        <div class="grid grid-cols-2 gap-6">
+          <!-- 导出区域 -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2 mb-3">
+              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <h3 class="font-medium text-text">导出账单</h3>
+            </div>
+            <div>
+              <label class="block text-sm text-text-secondary mb-1.5">开始日期</label>
+              <input v-model="exportStart" type="date" class="input w-full" :max="exportEnd || undefined" />
+            </div>
+            <div>
+              <label class="block text-sm text-text-secondary mb-1.5">结束日期</label>
+              <input v-model="exportEnd" type="date" class="input w-full" :min="exportStart || undefined" />
+            </div>
+            <p v-if="exportError" class="text-sm text-error">{{ exportError }}</p>
+            <button
+              @click="handleExport"
+              :disabled="isExporting"
+              class="btn btn-primary w-full gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg v-if="!isExporting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+              </svg>
+              {{ isExporting ? '导出中...' : '导出 Excel' }}
+            </button>
+          </div>
+
+          <!-- 竖向分割线 -->
+          <div class="border-l border-border pl-6 space-y-4">
+            <div class="flex items-center gap-2 mb-3">
+              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12" />
+              </svg>
+              <h3 class="font-medium text-text">导入账单</h3>
+            </div>
+
+            <!-- 下载模板 -->
+            <button
+              @click="handleDownloadTemplate"
+              class="btn btn-secondary w-full gap-2 text-sm"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              下载导入模板
+            </button>
+
+            <!-- 上传区域 -->
+            <div
+              class="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors relative"
+              :class="{ 'border-primary bg-primary/5': isDragOver }"
+              @click="triggerFileInput"
+              @dragover.prevent="isDragOver = true"
+              @dragleave.prevent="isDragOver = false"
+              @drop.prevent="handleFileDrop"
+            >
+              <input
+                ref="fileInputRef"
+                type="file"
+                accept=".xlsx,.xls"
+                class="hidden"
+                @change="handleFileChange"
+              />
+              <svg class="w-8 h-8 mx-auto text-text-muted mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <p v-if="!importFile" class="text-sm text-text-muted">
+                拖放 Excel 文件至此，或<span class="text-primary ml-1">点击选择</span>
+              </p>
+              <p v-else class="text-sm font-medium text-text truncate px-2">{{ importFile.name }}</p>
+            </div>
+
+            <!-- 验证结果 -->
+            <div v-if="importParsing" class="text-sm text-text-muted flex items-center gap-2">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+              </svg>
+              正在解析文件...
+            </div>
+            <div v-else-if="importErrors.length > 0" class="rounded-lg bg-error/10 border border-error/20 p-3">
+              <p class="text-sm font-medium text-error mb-2">发现 {{ importErrors.length }} 个错误，请修正后重新上传：</p>
+              <ul class="space-y-1 max-h-32 overflow-y-auto">
+                <li
+                  v-for="(err, i) in importErrors"
+                  :key="i"
+                  class="text-xs text-error/80"
+                >第 {{ err.row }} 行 · {{ err.field }}：{{ err.message }}</li>
+              </ul>
+            </div>
+            <div v-else-if="importRows.length > 0" class="rounded-lg bg-success/10 border border-success/20 p-3">
+              <p class="text-sm text-success">✓ 验证通过，共 {{ importRows.length }} 条记录，可以导入</p>
+            </div>
+
+            <!-- 确认导入按钮 -->
+            <button
+              v-if="importRows.length > 0 && importErrors.length === 0"
+              @click="handleImport"
+              :disabled="isImporting"
+              class="btn btn-primary w-full gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg v-if="!isImporting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5 13l4 4L19 7" />
+              </svg>
+              <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+              </svg>
+              {{ isImporting ? '导入中...' : `确认导入 ${importRows.length} 条` }}
+            </button>
+            <p v-if="importSuccess" class="text-sm text-success">{{ importSuccess }}</p>
+            <p v-if="importError" class="text-sm text-error">{{ importError }}</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useCategoriesStore } from '@/stores/categories'
+import { useDevice } from '@/utils/useDevice'
 import { authApi } from '@/api/auth'
+import { billApi } from '@/api/bills'
+import { downloadTemplate, exportBillsToExcel, parseImportFile } from '@/utils/excel'
+import type { ImportBillRow } from '@/utils/excel'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const categoriesStore = useCategoriesStore()
+const { isDesktop } = useDevice()
 
+// ---------------------------------------------------------------------------
+// 修改密码
+// ---------------------------------------------------------------------------
 const pwForm = ref({ oldPassword: '', newPassword: '', confirmPassword: '' })
 const isSavingPw = ref(false)
 const pwError = ref('')
@@ -134,4 +277,137 @@ const handleChangePassword = async () => {
     isSavingPw.value = false
   }
 }
+
+// ---------------------------------------------------------------------------
+// 导出
+// ---------------------------------------------------------------------------
+const today = new Date().toISOString().slice(0, 10)
+const firstOfMonth = today.slice(0, 8) + '01'
+const exportStart = ref(firstOfMonth)
+const exportEnd = ref(today)
+const isExporting = ref(false)
+const exportError = ref('')
+
+const handleExport = async () => {
+  exportError.value = ''
+  if (!exportStart.value || !exportEnd.value) {
+    exportError.value = '请选择导出时间段'
+    return
+  }
+  if (exportStart.value > exportEnd.value) {
+    exportError.value = '开始日期不能晚于结束日期'
+    return
+  }
+  isExporting.value = true
+  try {
+    const bills = await billApi.listBills(authStore.userId!, {
+      startDate: exportStart.value,
+      endDate: exportEnd.value,
+    })
+    if (!bills.length) {
+      exportError.value = '所选时间段内没有账单记录'
+      return
+    }
+    const filename = `账单_${exportStart.value}_${exportEnd.value}.xlsx`
+    exportBillsToExcel(bills, filename)
+  } catch (e) {
+    exportError.value = (e as Error).message || '导出失败，请重试'
+  } finally {
+    isExporting.value = false
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 导入
+// ---------------------------------------------------------------------------
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const importFile = ref<File | null>(null)
+const isDragOver = ref(false)
+const importParsing = ref(false)
+const importRows = ref<ImportBillRow[]>([])
+const importErrors = ref<Array<{ row: number; field: string; message: string }>>([])
+const isImporting = ref(false)
+const importSuccess = ref('')
+const importError = ref('')
+
+const resetImportState = () => {
+  importRows.value = []
+  importErrors.value = []
+  importSuccess.value = ''
+  importError.value = ''
+}
+
+const parseFile = async (file: File) => {
+  importFile.value = file
+  resetImportState()
+  importParsing.value = true
+  try {
+    await categoriesStore.getOrFetch()
+    const result = await parseImportFile(file, categoriesStore.sortedCategories)
+    importRows.value = result.rows
+    importErrors.value = result.errors
+  } catch (e) {
+    importErrors.value = [{ row: 0, field: '文件', message: (e as Error).message || '解析失败' }]
+  } finally {
+    importParsing.value = false
+  }
+}
+
+const triggerFileInput = () => {
+  fileInputRef.value?.click()
+}
+
+const handleFileChange = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (file) parseFile(file)
+}
+
+const handleFileDrop = (e: DragEvent) => {
+  isDragOver.value = false
+  const file = e.dataTransfer?.files?.[0]
+  if (file) parseFile(file)
+}
+
+const handleDownloadTemplate = async () => {
+  await categoriesStore.getOrFetch()
+  const names = categoriesStore.sortedCategories.map((c) => c.name)
+  downloadTemplate(names)
+}
+
+const handleImport = async () => {
+  importSuccess.value = ''
+  importError.value = ''
+  isImporting.value = true
+  try {
+    const items = importRows.value
+      .filter((r) => r.category_id !== undefined)
+      .map((r) => ({
+        value: r.value,
+        merchant_name: r.merchant_name,
+        transaction_date: r.transaction_date,
+        category_id: r.category_id!,
+        description: r.description || undefined,
+      }))
+
+    const result = await billApi.batchCreateBills({
+      user_id: authStore.userId!,
+      items,
+    })
+    importSuccess.value = `成功导入 ${result.created_count} 条账单`
+    importFile.value = null
+    importRows.value = []
+    if (fileInputRef.value) fileInputRef.value.value = ''
+  } catch (e) {
+    importError.value = (e as Error).message || '导入失败，请重试'
+  } finally {
+    isImporting.value = false
+  }
+}
+
+onMounted(() => {
+  if (isDesktop.value) {
+    categoriesStore.getOrFetch()
+  }
+})
 </script>
+
