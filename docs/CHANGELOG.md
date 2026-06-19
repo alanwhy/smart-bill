@@ -2,6 +2,34 @@
 
 所有前端版本变更记录。格式遵循 [Conventional Commits](https://conventionalcommits.org/)。
 
+## [0.7.0] - 2026-06-19
+
+### 已实现
+
+- [x] Phase 24：分类层级结构（树形分类）
+  - **数据库层**：`categories` 表新增 `parent_id` 自引用外键（`ON DELETE RESTRICT`，防止有子分类的分类被删除），支持无限层级嵌套
+  - **`GET /api/v1/categories/tree`**：新增树形端点，仅返回根节点，子节点递归嵌套在 `children` 数组中；`CategoryTree` Pydantic 模型支持递归自引用
+  - **`GET /api/v1/categories`**：平铺列表已增加 `parent_id` 字段
+  - **创建/更新分类**：校验父分类是否存在、防止循环引用；`UpdateCategoryRequest` 支持明确传 `null` 将分类提升为根节点
+  - **删除分类**：有子分类时返回 400，禁止删除
+  - **账单列表过滤**：`category_id` 过滤时自动展开后代分类，查询某个父分类时同时返回所有子分类账单
+  - **`scripts/migrate_categories_tree.py`**：为存量数据库添加 `parent_id` 列的迁移脚本
+  - **前端 `CategoryTree` 类型**：`bill.ts` 新增 `CategoryTree` 接口（含 `children: CategoryTree[]`）
+  - **`categoryApi.listTree()`**：`api/categories.ts` 新增调用树形端点的方法
+  - **`categories` store 扩展**：`rootCategories`（根节点列表）、`childrenOf(id)`（子节点）、`buildTree()`、`byId(id)` 计算属性
+  - **`CategoryDrillDown.vue`**：新增钻取式分类选择组件（逐级展开，支持选中任意层级），用于账单编辑和筛选
+  - **`CategoryNodeRow.vue`**：新增树形节点行组件，递归渲染分类树，支持展开/折叠
+  - **`CategoriesPage.vue`** 重设计：树形视图展示，支持展开/折叠节点，新增/编辑时可选择父分类
+  - **`BillEditModal.vue`** / **`BillFilters.vue`**：分类选择器替换为 `CategoryDrillDown` 钻取组件
+  - **`BillCard.vue`**：展示完整分类路径（如 `餐饮 / 午餐`）
+  - **`SettingsPage.vue`**：同步更新分类相关展示逻辑
+  - 前端自定义数字输入框滚轮样式（隐藏默认 spinner，CSS 自定义）
+  - 全局滚动条样式优化（`main.css`）
+
+_last commit: `17b7ba8263de7c533b135f56414a1f295b0ee1b8`_
+
+---
+
 ## [0.6.0](https://github.com/alanwhy/smart-bill/compare/v0.5.0...v0.6.0) (2026-06-19)
 
 

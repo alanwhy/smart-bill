@@ -41,6 +41,7 @@
 
 - **pages/** - 页面组件：DashboardPage、LoginPage、CategoriesPage、SettingsPage、UserPage、UsersAdminPage、ForceChangePasswordPage
 - **components/bills/** - 账单相关组件：BillCard、BillEditModal、BillFilters、BillUploadModal
+- **components/categories/** - 分类组件：CategoryDrillDown（钒取式分类选择）、CategoryNodeRow（树形节点行）
 - **components/common/** - 通用组件：Toast（通知）、ConfirmDialog（确认框）
 - **stores/** - Pinia 状态管理：auth.ts、bills.ts、categories.ts、ui.ts
 - **api/** - axios 请求封装，Vite 代理到 http://localhost:8000
@@ -88,7 +89,9 @@ Category(
   icon: str,
   color: str,
   sort_order: int,
-  created_at: datetime
+  parent_id: int | None,      # 父分类 ID（null 表示根分类）
+  created_at: datetime,
+  updated_at: datetime
 )
 ```
 
@@ -173,7 +176,10 @@ smart-bill/
 │   └── web/
 │       ├── src/
 │       │   ├── pages/       # 页面组件
-│       │   ├── components/  # 通用/业务组件
+│       │   ├── components/
+│       │   │   ├── bills/        # BillCard, BillEditModal, BillFilters, BillUploadModal
+│       │   │   ├── categories/   # CategoryDrillDown, CategoryNodeRow
+│       │   │   └── common/       # Toast, ConfirmDialog
 │       │   ├── stores/      # Pinia 状态管理
 │       │   ├── api/         # axios 请求封装
 │       │   ├── router/      # 路由配置
@@ -188,7 +194,8 @@ smart-bill/
 │   ├── restart.sh           # 一键重启前后端脚本（开发环境）
 │   ├── deploy.sh            # 后端一键生产部署脚本（支持 --init 首次初始化）
 │   ├── deploy_frontend.sh   # 前端一键部署脚本（本地构建→rsync→容器）
-│   └── migrate_user_system.py # 用户系统存量数据迁移脚本
+│   ├── migrate_user_system.py  # 用户系统存量数据迁移脚本
+│   └── migrate_categories_tree.py # 分类树存量数据迁移脚本（添加 parent_id 列）
 ├── docker/
 │   ├── Dockerfile           # 后端镜像（Python + FastAPI）
 │   ├── Dockerfile.frontend  # 前端镜像（nginx:alpine + 预构建 dist）

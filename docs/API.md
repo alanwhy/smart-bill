@@ -285,10 +285,11 @@ Content-Type: application/json
 
 Body:
 {
-  "name": "旅行",
-  "icon": "✈️",
-  "color": "#3B82F6",
-  "sort_order": 10
+  "name": "午餐",
+  "icon": "🍱",
+  "color": "#F97316",
+  "sort_order": 1,
+  "parent_id": 1   # 可选，null 或省略表示创建为根分类
 }
 
 Response:
@@ -296,17 +297,19 @@ Response:
   "code": 0,
   "msg": "success",
   "data": {
-    "id": 8,
-    "name": "旅行",
-    "icon": "✈️",
-    "color": "#3B82F6",
-    "sort_order": 10,
-    "created_at": "2026-06-17T14:00:00"
+    "id": 9,
+    "name": "午餐",
+    "icon": "🍱",
+    "color": "#F97316",
+    "sort_order": 1,
+    "parent_id": 1,
+    "created_at": "2026-06-19T14:00:00",
+    "updated_at": "2026-06-19T14:00:00"
   }
 }
 ```
 
-### 列出所有分类
+### 列出所有分类（平铺）
 ```
 GET /categories
 
@@ -315,8 +318,44 @@ Response:
   "code": 0,
   "msg": "success",
   "data": [
-    {"id": 1, "name": "餐饮", "icon": "🍽️", "color": "#F59E0B", "sort_order": 1},
-    {"id": 2, "name": "交通", "icon": "🚗", "color": "#10B981", "sort_order": 2}
+    {"id": 1, "name": "餐饮", "icon": "🍽️", "color": "#F59E0B", "sort_order": 1, "parent_id": null},
+    {"id": 2, "name": "交通", "icon": "🚗", "color": "#10B981", "sort_order": 2, "parent_id": null},
+    {"id": 9, "name": "午餐", "icon": "🍱", "color": "#F97316", "sort_order": 1, "parent_id": 1}
+  ]
+}
+```
+
+### 查询树形分类列表
+```
+GET /categories/tree
+
+# 仅返回根分类，子分类递归嵌套在 children 数组中
+
+Response:
+{
+  "code": 0,
+  "msg": "success",
+  "data": [
+    {
+      "id": 1,
+      "name": "餐饮",
+      "icon": "🍽️",
+      "color": "#F59E0B",
+      "sort_order": 1,
+      "parent_id": null,
+      "children": [
+        {"id": 9, "name": "午餐", "icon": "🍱", "color": "#F97316", "sort_order": 1, "parent_id": 1, "children": []}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "交通",
+      "icon": "🚗",
+      "color": "#10B981",
+      "sort_order": 2,
+      "parent_id": null,
+      "children": []
+    }
   ]
 }
 ```
@@ -364,6 +403,7 @@ Response:
 ```
 
 **删除安全限制**：
+- 若分类下还有子分类，返回 400（`ON DELETE RESTRICT` 约束）
 - 若分类下还有账单，返回 400："分类「x」下还有账单，请先修改这些账单的分类后再删除"
 - 若只剩最后一个分类，返回 400："至少保留一个分类，无法删除"
 

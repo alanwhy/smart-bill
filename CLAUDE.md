@@ -52,7 +52,8 @@ bash scripts/deploy_frontend.sh      # 前端独立部署（19284 端口）
 | POST | `/api/v1/bills/batch` | 批量导入账单（JSON 数组） |
 | GET | `/api/v1/bills` | 查询列表（user_id, start_date, end_date, category_id, merchant_name） |
 | PUT/DELETE | `/api/v1/bills/{id}` | 修改/删除账单 |
-| GET/POST/PUT/DELETE | `/api/v1/categories[/{id}]` | 分类 CRUD |
+| GET/POST/PUT/DELETE | `/api/v1/categories[/{id}]` | 分类 CRUD（含 parent_id 支持层级结构） |
+| GET | `/api/v1/categories/tree` | 树形分类列表（根节点 + 嵌套 children） |
 | GET | `/api/v1/users` | 用户列表（仅 admin） |
 | POST | `/api/v1/users` | 创建用户（仅 admin） |
 | PUT | `/api/v1/users/{id}/username` | 修改用户名（仅 admin，不能改自己） |
@@ -71,9 +72,12 @@ frontend/web/src/utils/cycle.ts  # 月度周期日期计算（getCycleDates）
 frontend/web/src/utils/excel.ts  # Excel 导入/导出工具
 frontend/web/src/utils/useDevice.ts  # 设备检测工具
 frontend/web/src/stores/         # auth / bills / categories / ui
+frontend/web/src/components/categories/CategoryDrillDown.vue  # 钒取式分类选择器
+frontend/web/src/components/categories/CategoryNodeRow.vue    # 树形节点行组件
 frontend/web/src/pages/UsersAdminPage.vue        # 用户管理页
 frontend/web/src/pages/ForceChangePasswordPage.vue  # 强制改密页
 scripts/migrate_user_system.py   # 存量用户数据迁移脚本
+scripts/migrate_categories_tree.py  # 分类树存量数据迁移脚本（添加 parent_id 列）
 ```
 
 ## 待完成（下一阶段）
@@ -95,11 +99,3 @@ scripts/migrate_user_system.py   # 存量用户数据迁移脚本
 ---
 
 **最后更新**: 2026-06-19 · **GitHub**: https://github.com/alanwhy/smart-bill
-
-## 提交规范
-
-`feat|fix|docs|refactor|test|chore: <subject>`
-
----
-
-**最后更新**: 2026-06-18 · **GitHub**: https://github.com/alanwhy/smart-bill

@@ -8,7 +8,7 @@
 - **手动创建账单**，无需上传图片
 - **收支类型区分**（负数=支出，正数=收入）
 - 账单数据保存到 SQLite，支持查询/编辑/删除
-- 自定义分类管理（CRUD）
+- 自定义分类管理（CRUD，支持父子分类层级树）
 - 账单备注功能
 - 用户认证（JWT）
 - **月度账单周期自定义**（起始日 1-28 可配置）
@@ -103,7 +103,10 @@ smart-bill/
 ├── frontend/web/     # Vue 3 前端
 │   └── src/
 │       ├── pages/    # 页面（Dashboard, Login, Categories, Settings, UserPage, UsersAdmin, ForceChangePassword）
-│       ├── components/  # 组件（BillCard, Toast, ConfirmDialog...）
+        ├── components/
+        │   ├── bills/        # BillCard, BillEditModal, BillFilters, BillUploadModal
+        │   ├── categories/   # CategoryDrillDown（钒取选择器）, CategoryNodeRow（树形节点）
+        │   └── common/       # Toast, ConfirmDialog
 │       ├── stores/   # Pinia 状态（auth, bills, categories）
 │       ├── utils/    # 工具（cycle.ts 周期日期 / excel.ts 导入导出 / useDevice.ts）
 │       └── api/      # axios 请求封装
@@ -115,7 +118,9 @@ smart-bill/
 ├── scripts/
 │   ├── restart.sh          # 一键重启（开发环境）
 │   ├── deploy.sh           # 后端一键部署（生产环境）
-│   └── deploy_frontend.sh  # 前端一键部署（生产环境）
+│   ├── deploy_frontend.sh  # 前端一键部署（生产环境）
+│   ├── migrate_user_system.py  # 用户系统存量数据迁移
+│   └── migrate_categories_tree.py # 分类树存量数据迁移
 └── docs/             # 文档
 ```
 
