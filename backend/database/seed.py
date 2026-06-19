@@ -33,20 +33,26 @@ def seed_default_categories(db: Session) -> None:
 
 
 def seed_default_users(db: Session) -> None:
-    """如果用户表为空，则插入内置用户。"""
+    """如果用户表为空，则插入内置管理员账号 admin / 123456。
+
+    其他普通用户由管理员通过用户管理模块创建；老库中已有的用户保持不动，
+    迁移到 must_change_password=true 的工作由 ``scripts/migrate_user_system.py`` 完成。
+    """
     if db.query(User).count() > 0:
         return
 
     from backend.services.auth_service import hash_password
 
-    default_users = [
-        ("wuhaoyuan", "123456"),
-        ("chenqingling", "123456"),
-    ]
-    for username, password in default_users:
-        db.add(User(username=username, hashed_password=hash_password(password)))
+    db.add(
+        User(
+            username="admin",
+            hashed_password=hash_password("123456"),
+            role="admin",
+            must_change_password=True,
+        )
+    )
     db.commit()
-    logger.info(f"Seeded {len(default_users)} default users")
+    logger.info("Seeded default admin user (username=admin, must_change_password=true)")
 
 
 def backfill_legacy_bill_categories(engine: Engine, db: Session) -> None:

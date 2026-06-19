@@ -4,11 +4,15 @@ export interface LoginResponse {
   token: string
   user_id: number
   username: string
+  role: string
+  must_change_password: boolean
 }
 
 export interface UserInfo {
   user_id: number
   username: string
+  role: string
+  must_change_password: boolean
 }
 
 export interface UserCycle {

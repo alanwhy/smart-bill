@@ -1,6 +1,6 @@
 """认证相关 API 端点"""
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from backend.core.models import BillResponse, ChangePasswordRequest, LoginRequest, LoginResponse, UpdateCycleRequest, UserCycleResponse, UserInfo
@@ -14,22 +14,26 @@ router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 def get_current_user(authorization: str = Header(...), db: Session = Depends(get_db)):
     """从 Authorization Bearer token 中提取当前用户"""
     if not authorization.startswith("Bearer "):
-        from fastapi import HTTPException
         raise HTTPException(status_code=401, detail="Invalid authorization header")
 
     token = authorization[7:]
     payload = decode_token(token)
     if payload is None:
-        from fastapi import HTTPException
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     user_id = payload.get("user_id")
     user = crud.get_user_by_id(db, user_id)
     if user is None:
-        from fastapi import HTTPException
         raise HTTPException(status_code=401, detail="User not found")
 
     return user
+
+
+def require_admin(current_user=Depends(get_current_user)):
+    """依赖：仅 admin 用户可访问"""
+    if getattr(current_user, "role", "user") != "admin":
+        raise HTTPException(status_code=403, detail="仅管理员可执行此操作")
+    return current_user
 
 
 @router.post("/login", response_model=BillResponse)
@@ -41,7 +45,13 @@ def login(request: LoginRequest, db: Session = Depends(get_db)) -> BillResponse:
             return BillResponse(code=401, msg="用户名或密码错误")
 
         token = create_access_token({"user_id": user.id, "username": user.username})
-        data = LoginResponse(token=token, user_id=user.id, username=user.username)
+        data = LoginResponse(
+            token=token,
+            user_id=user.id,
+            username=user.username,
+            role=user.role or "user",
+            must_change_password=bool(user.must_change_password),
+        )
         return BillResponse(code=0, msg="success", data=data.model_dump())
 
     except Exception as e:
@@ -54,7 +64,12 @@ def get_me(authorization: str = Header(...), db: Session = Depends(get_db)) -> B
     """获取当前登录用户信息"""
     try:
         user = get_current_user(authorization, db)
-        data = UserInfo(user_id=user.id, username=user.username)
+        data = UserInfo(
+            user_id=user.id,
+            username=user.username,
+            role=user.role or "user",
+            must_change_password=bool(user.must_change_password),
+        )
         return BillResponse(code=0, msg="success", data=data.model_dump())
     except Exception as e:
         return BillResponse(code=401, msg=str(e))

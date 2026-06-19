@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from backend.api import auth, bills, categories
+from backend.api import auth, bills, categories, users
 
 router = APIRouter()
 
@@ -10,5 +10,6 @@ router = APIRouter()
 router.include_router(auth.router)
 router.include_router(bills.router)
 router.include_router(categories.router)
+router.include_router(users.router)
 
 __all__ = ["router"]

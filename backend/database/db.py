@@ -85,6 +85,30 @@ def init_db():
             except Exception:
                 pass  # 列已存在则忽略
 
+        # 迁移：为旧库添加 role 列（幂等）
+        with engine.connect() as conn:
+            try:
+                conn.execute(
+                    __import__("sqlalchemy").text(
+                        "ALTER TABLE users ADD COLUMN role VARCHAR(16) NOT NULL DEFAULT 'user'"
+                    )
+                )
+                conn.commit()
+            except Exception:
+                pass  # 列已存在则忽略
+
+        # 迁移：为旧库添加 must_change_password 列（幂等）
+        with engine.connect() as conn:
+            try:
+                conn.execute(
+                    __import__("sqlalchemy").text(
+                        "ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0"
+                    )
+                )
+                conn.commit()
+            except Exception:
+                pass  # 列已存在则忽略
+
         db = SessionLocal()
         try:
             seed_default_categories(db)

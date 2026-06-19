@@ -205,6 +205,8 @@ class LoginResponse(BaseModel):
     token: str = Field(..., description="JWT token")
     user_id: int = Field(..., description="用户 ID")
     username: str = Field(..., description="用户名")
+    role: str = Field(..., description="角色：admin / user")
+    must_change_password: bool = Field(..., description="是否需要在下次登录时强制修改密码")
 
 
 class UserInfo(BaseModel):
@@ -212,6 +214,8 @@ class UserInfo(BaseModel):
 
     user_id: int = Field(..., description="用户 ID")
     username: str = Field(..., description="用户名")
+    role: str = Field(..., description="角色：admin / user")
+    must_change_password: bool = Field(..., description="是否需要在下次登录时强制修改密码")
 
 
 class ChangePasswordRequest(BaseModel):
@@ -231,3 +235,44 @@ class UpdateCycleRequest(BaseModel):
     """更新用户月度周期请求"""
 
     cycle_start_day: int = Field(..., description="月度账单周期起始日（1-28）", ge=1, le=28)
+
+
+# ---------------------------------------------------------------------------
+# Admin: 用户管理
+# ---------------------------------------------------------------------------
+
+
+class AdminUserBrief(BaseModel):
+    """管理员视角的用户摘要"""
+
+    id: int = Field(..., description="用户 ID")
+    username: str = Field(..., description="用户名")
+    role: str = Field(..., description="角色：admin / user")
+    must_change_password: bool = Field(..., description="是否需要强制改密")
+    created_at: datetime = Field(..., description="创建时间")
+    updated_at: datetime = Field(..., description="更新时间")
+
+    class Config:
+        from_attributes = True
+
+
+class CreateUserRequest(BaseModel):
+    """管理员创建新用户"""
+
+    username: str = Field(..., description="用户名", min_length=1, max_length=50)
+    password: str = Field(..., description="初始密码", min_length=6)
+    role: str = Field(default="user", description="角色：admin / user", pattern=r"^(admin|user)$")
+
+
+class UpdateUsernameRequest(BaseModel):
+    """管理员修改用户名"""
+
+    username: str = Field(..., description="新用户名", min_length=1, max_length=50)
+
+
+class ResetPasswordResponse(BaseModel):
+    """重置密码返回的临时密码（一次性展示）"""
+
+    user_id: int = Field(..., description="目标用户 ID")
+    username: str = Field(..., description="目标用户名")
+    temp_password: str = Field(..., description="一次性临时密码（明文，仅本次返回）")

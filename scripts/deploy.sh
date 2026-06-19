@@ -122,6 +122,12 @@ ssh_cmd "cd $REMOTE_DIR && \
 info "等待服务启动（最多 60 秒）..."
 for i in $(seq 1 12); do
   if ssh_cmd "curl -sf http://localhost:19283/health" >/dev/null 2>&1; then
+    info "服务已启动，开始执行用户体系兼容迁移..."
+    if ssh_cmd "docker exec smart-bill-app python /app/scripts/migrate_user_system.py"; then
+      info "用户体系迁移完成"
+    else
+      warn "用户体系迁移失败，请手动排查（不影响本次部署成功状态）"
+    fi
     info "=== 部署成功！==="
     echo ""
     echo "  API 地址：http://${SERVER_IP}:19283"

@@ -112,7 +112,11 @@ async function handleLogin() {
   isLoading.value = true
   try {
     await authStore.login(form.value.username, form.value.password)
-    router.push({ name: 'Dashboard' })
+    if (authStore.mustChangePassword) {
+      router.push({ name: 'ForceChangePassword' })
+    } else {
+      router.push({ name: 'Dashboard' })
+    }
   } catch (e) {
     await nextTick()
     errorMsg.value = (e as Error).message || '登录失败，请重试'

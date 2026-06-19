@@ -40,6 +40,17 @@
           </svg>
           <span>设置</span>
         </router-link>
+        <router-link
+          v-if="authStore.isAdmin"
+          to="/users"
+          class="mt-2 flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200"
+          :class="$route.path === '/users' ? 'bg-primary text-background' : 'hover:bg-border text-text'"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span>用户管理</span>
+        </router-link>
       </nav>
       <!-- 底部用户信息（点击跳转用户中心） -->
       <router-link
@@ -143,6 +154,17 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
           <span class="text-xs">设置</span>
+        </router-link>
+        <router-link
+          v-if="authStore.isAdmin"
+          to="/users"
+          class="flex flex-col items-center justify-center gap-1 flex-1 h-full"
+          :class="$route.path === '/users' ? 'text-primary' : 'text-text-muted'"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span class="text-xs">用户</span>
         </router-link>
       </div>
     </nav>

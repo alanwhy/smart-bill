@@ -4,6 +4,8 @@ import SettingsPage from "@/pages/SettingsPage.vue";
 import CategoriesPage from "@/pages/CategoriesPage.vue";
 import LoginPage from "@/pages/LoginPage.vue";
 import UserPage from "@/pages/UserPage.vue";
+import ForceChangePasswordPage from "@/pages/ForceChangePasswordPage.vue";
+import UsersAdminPage from "@/pages/UsersAdminPage.vue";
 import { useAuthStore } from "@/stores/auth";
 
 const routes = [
@@ -12,6 +14,12 @@ const routes = [
     name: "Login",
     component: LoginPage,
     meta: { requiresAuth: false },
+  },
+  {
+    path: "/force-change-password",
+    name: "ForceChangePassword",
+    component: ForceChangePasswordPage,
+    meta: { requiresAuth: true },
   },
   {
     path: "/",
@@ -37,6 +45,12 @@ const routes = [
     component: UserPage,
     meta: { requiresAuth: true },
   },
+  {
+    path: "/users",
+    name: "UsersAdmin",
+    component: UsersAdminPage,
+    meta: { requiresAuth: true, adminOnly: true },
+  },
 ];
 
 const router = createRouter({
@@ -52,6 +66,21 @@ router.beforeEach((to) => {
   }
 
   if (to.name === "Login" && authStore.isAuthenticated) {
+    return { name: "Dashboard" };
+  }
+
+  // 强制改密：除 ForceChangePassword 和 Login 外一律拦截
+  if (
+    authStore.isAuthenticated &&
+    authStore.mustChangePassword &&
+    to.name !== "ForceChangePassword" &&
+    to.name !== "Login"
+  ) {
+    return { name: "ForceChangePassword" };
+  }
+
+  // 仅管理员可访问的页面
+  if (to.meta.adminOnly && !authStore.isAdmin) {
     return { name: "Dashboard" };
   }
 });

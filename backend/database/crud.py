@@ -295,26 +295,96 @@ def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
         raise DatabaseError(f"Failed to query user: {str(e)}")
 
 
-def create_user(db: Session, username: str, hashed_password: str) -> User:
-    """创建用户"""
+def create_user(
+    db: Session,
+    username: str,
+    hashed_password: str,
+    role: str = "user",
+    must_change_password: bool = True,
+) -> User:
+    """创建用户。默认新用户首次登录需强制修改密码。"""
     try:
-        user = User(username=username, hashed_password=hashed_password)
+        existing = db.query(User).filter(User.username == username).first()
+        if existing:
+            raise ValidationError(
+                "Username already exists",
+                detail=f"用户名「{username}」已存在",
+            )
+        if role not in ("admin", "user"):
+            raise ValidationError("Invalid role", detail="role 必须为 admin 或 user")
+
+        user = User(
+            username=username,
+            hashed_password=hashed_password,
+            role=role,
+            must_change_password=must_change_password,
+        )
         db.add(user)
         db.commit()
         db.refresh(user)
         return user
+    except ValidationError:
+        raise
     except Exception as e:
         db.rollback()
         raise DatabaseError(f"Failed to create user: {str(e)}")
 
 
+def list_users(db: Session) -> List[User]:
+    """列出所有用户（按 id 升序）"""
+    try:
+        return db.query(User).order_by(User.id.asc()).all()
+    except Exception as e:
+        raise DatabaseError(f"Failed to list users: {str(e)}")
+
+
+def update_username(db: Session, user_id: int, new_username: str) -> User:
+    """修改用户名（用户名唯一）"""
+    try:
+        new_username = (new_username or "").strip()
+        if not new_username:
+            raise ValidationError("Invalid username", detail="用户名不能为空")
+        if len(new_username) > 50:
+            raise ValidationError("Invalid username", detail="用户名长度不能超过 50 字符")
+
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise ResourceNotFoundError("User", user_id)
+
+        if new_username == user.username:
+            return user
+
+        duplicate = (
+            db.query(User)
+            .filter(User.username == new_username, User.id != user_id)
+            .first()
+        )
+        if duplicate:
+            raise ValidationError(
+                "Username already exists",
+                detail=f"用户名「{new_username}」已存在",
+            )
+
+        user.username = new_username
+        user.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(user)
+        return user
+    except (ResourceNotFoundError, ValidationError):
+        raise
+    except Exception as e:
+        db.rollback()
+        raise DatabaseError(f"Failed to update username: {str(e)}")
+
+
 def update_password(db: Session, user_id: int, new_hashed_password: str) -> User:
-    """更新用户密码"""
+    """更新用户密码；任何成功改密都会清除 must_change_password 旗标。"""
     try:
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise ResourceNotFoundError("User", user_id)
         user.hashed_password = new_hashed_password
+        user.must_change_password = False
         user.updated_at = datetime.utcnow()
         db.commit()
         db.refresh(user)
@@ -324,6 +394,25 @@ def update_password(db: Session, user_id: int, new_hashed_password: str) -> User
     except Exception as e:
         db.rollback()
         raise DatabaseError(f"Failed to update password: {str(e)}")
+
+
+def reset_user_password(db: Session, user_id: int, new_hashed_password: str) -> User:
+    """管理员重置用户密码：写入新哈希并标记为需强制修改。"""
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise ResourceNotFoundError("User", user_id)
+        user.hashed_password = new_hashed_password
+        user.must_change_password = True
+        user.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(user)
+        return user
+    except ResourceNotFoundError:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise DatabaseError(f"Failed to reset user password: {str(e)}")
 
 
 def get_user_cycle(db: Session, user_id: int) -> int:

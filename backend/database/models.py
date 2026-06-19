@@ -3,6 +3,7 @@
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     Column,
     DateTime,
     Float,
@@ -25,6 +26,10 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True, comment="用户 ID")
     username = Column(String(50), nullable=False, unique=True, index=True, comment="用户名")
     hashed_password = Column(String(255), nullable=False, comment="哈希密码")
+    role = Column(String(16), nullable=False, default="user", comment="角色：admin / user")
+    must_change_password = Column(
+        Boolean, nullable=False, default=False, comment="是否需要在下次登录时强制修改密码"
+    )
     cycle_start_day = Column(Integer, nullable=False, default=1, comment="月度账单周期起始日（1-28）")
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment="创建时间")
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False, comment="更新时间")
