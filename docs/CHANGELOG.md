@@ -2,6 +2,15 @@
 
 所有前端版本变更记录。格式遵循 [Conventional Commits](https://conventionalcommits.org/)。
 
+## [0.7.1](https://github.com/alanwhy/smart-bill/compare/v0.7.0...v0.7.1) (2026-06-19)
+
+
+### 🐛 Bug 修复
+
+* 优化 401 错误处理逻辑，使用状态管理和路由跳转替代直接操作 localStorage ([e2a2201](https://github.com/alanwhy/smart-bill/commit/e2a2201fbce16614da1001a1ec73e5e730f36456))
+* 优化用户首次登录强制改密逻辑，仅在新建列时批量标记 ([b750599](https://github.com/alanwhy/smart-bill/commit/b750599e95b2237a038788e0baf4cc8a33d3d14f))
+* 统一 schema 迁移机制，补全 categories.parent_id 自动迁移 ([bb6da43](https://github.com/alanwhy/smart-bill/commit/bb6da43cd805f3c75fca8a3526f16b5c3a75f366))
+
 ## [0.7.0](https://github.com/alanwhy/smart-bill/compare/v0.6.0...v0.7.0) (2026-06-19)
 
 
