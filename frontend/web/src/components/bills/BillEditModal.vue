@@ -10,7 +10,7 @@
         <!-- 移动端：全宽、顶部圆角、flex-col 可滚动；PC 端：还原原始居中 modal 样式 -->
         <div v-show="visible" class="bg-surface w-full pointer-events-auto
           rounded-t-2xl max-h-[90dvh] flex flex-col overflow-hidden
-          sm:rounded-2xl sm:max-w-lg sm:max-h-none sm:flex-none sm:overflow-visible sm:mx-auto shadow-xl"
+          sm:rounded-2xl sm:max-w-lg sm:max-h-[90vh] sm:flex sm:flex-col sm:overflow-hidden sm:mx-auto shadow-xl"
           @touchstart.passive="onDragStart"
           @touchend.passive="onDragEnd"
         >
@@ -36,20 +36,34 @@
           </div>
 
       <!-- 内容（移动端可滚动；PC 端随内容撑高） -->
-      <div ref="scrollRef" class="p-6 space-y-4 overflow-y-auto flex-1 sm:overflow-visible sm:flex-none">
+      <div ref="scrollRef" class="p-6 space-y-4 overflow-y-auto flex-1">
         <!-- 金额（负数=支出，正数=收入） -->
         <div>
           <label class="block text-sm font-medium text-text mb-2">
             金额
             <span class="text-xs font-normal text-text-muted ml-1">（负数为支出）</span>
           </label>
-          <input
-            v-model.number="formData.amount"
-            type="number"
-            step="0.01"
-            class="input"
-            placeholder="0.00"
-          />
+          <div class="input-number-wrap">
+            <input
+              v-model.number="formData.amount"
+              type="number"
+              step="0.01"
+              class="input"
+              placeholder="0.00"
+            />
+            <div class="input-number-controls">
+              <button type="button" tabindex="-1" @click="formData.amount = +(formData.amount + 0.01).toFixed(2)">
+                <svg viewBox="0 0 10 6" width="10" height="6" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M1 5L5 1L9 5"/>
+                </svg>
+              </button>
+              <button type="button" tabindex="-1" @click="formData.amount = +(formData.amount - 0.01).toFixed(2)">
+                <svg viewBox="0 0 10 6" width="10" height="6" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M1 1L5 5L9 1"/>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- 商户名称 -->
@@ -66,23 +80,13 @@
         <!-- 分类 -->
         <div>
           <label class="block text-sm font-medium text-text mb-2">分类</label>
-          <p v-if="categoriesStore.isLoading && categories.length === 0" class="text-xs text-text-muted">加载中...</p>
-          <div v-else class="grid grid-cols-3 gap-2">
-            <button
-              v-for="cat in categories"
-              :key="cat.id"
-              @click="formData.category_id = cat.id"
-              :class="[
-                'p-3 rounded-lg border-2 transition-all duration-200',
-                formData.category_id === cat.id
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border bg-surface hover:border-primary/50',
-              ]"
-            >
-              <div class="text-lg mb-1">{{ cat.icon }}</div>
-              <div class="text-xs text-text-secondary">{{ cat.name }}</div>
-            </button>
-          </div>
+          <p v-if="categoriesStore.isLoading && categoriesStore.sortedCategories.length === 0" class="text-xs text-text-muted">加载中...</p>
+          <CategoryDrillDown
+            v-else
+            :model-value="formData.category_id || undefined"
+            size="md"
+            @select="formData.category_id = $event"
+          />
         </div>
 
         <!-- 交易日期 -->
@@ -138,12 +142,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useBillsStore } from '@/stores/bills'
 import { useCategoriesStore } from '@/stores/categories'
 import { useAuthStore } from '@/stores/auth'
 import type { BillRecord } from '@/types/bill'
 import { format, parseISO } from 'date-fns'
+import CategoryDrillDown from '@/components/categories/CategoryDrillDown.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -168,8 +173,6 @@ const isMobile = computed(() => windowWidth.value < 640)
 function onResize() { windowWidth.value = window.innerWidth }
 onMounted(() => window.addEventListener('resize', onResize, { passive: true }))
 onUnmounted(() => window.removeEventListener('resize', onResize))
-
-const categories = computed(() => categoriesStore.sortedCategories)
 
 const isSubmitting = ref(false)
 const errorMessage = ref('')
@@ -198,6 +201,7 @@ const formData = reactive({
     : todayDatetimeLocal(),
   description: props.bill?.description ?? '',
 })
+
 
 onMounted(() => {
   categoriesStore.getOrFetch()
@@ -273,3 +277,17 @@ const handleSubmit = async () => {
   }
 }
 </script>
+
+<style scoped>
+.expand-sub-enter-active,
+.expand-sub-leave-active {
+  transition: max-height 0.2s ease, opacity 0.15s ease;
+  max-height: 600px;
+  overflow: hidden;
+}
+.expand-sub-enter-from,
+.expand-sub-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+</style>

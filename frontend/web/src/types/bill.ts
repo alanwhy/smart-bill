@@ -3,12 +3,24 @@ export interface CategoryBrief {
   name: string
   icon: string
   color: string
+  parent_id?: number | null
 }
 
 export interface Category extends CategoryBrief {
   sort_order: number
+  parent_id?: number | null
   created_at: string
   updated_at: string
+}
+
+export interface CategoryTree {
+  id: number
+  name: string
+  icon: string
+  color: string
+  sort_order: number
+  parent_id?: number | null
+  children: CategoryTree[]
 }
 
 export interface CreateCategoryRequest {
@@ -16,6 +28,7 @@ export interface CreateCategoryRequest {
   icon?: string
   color?: string
   sort_order?: number
+  parent_id?: number | null
 }
 
 export interface UpdateCategoryRequest {
@@ -23,6 +36,7 @@ export interface UpdateCategoryRequest {
   icon?: string
   color?: string
   sort_order?: number
+  parent_id?: number | null
 }
 
 export interface BillItem {

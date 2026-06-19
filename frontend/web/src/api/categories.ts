@@ -1,10 +1,16 @@
 import client from './client'
-import type { Category, CreateCategoryRequest, UpdateCategoryRequest } from '@/types/bill'
+import type { Category, CategoryTree, CreateCategoryRequest, UpdateCategoryRequest } from '@/types/bill'
 
 export const categoryApi = {
-  /** 查询全部分类 */
+  /** 查询全部分类（平铺列表） */
   async list(): Promise<Category[]> {
     const response = await client.get('/categories')
+    return response || []
+  },
+
+  /** 查询树形分类列表（根节点含 children 嵌套） */
+  async listTree(): Promise<CategoryTree[]> {
+    const response = await client.get('/categories/tree')
     return response || []
   },
 

@@ -21,6 +21,7 @@ def create_category(
     icon: str = "",
     color: str = "#6B7280",
     sort_order: Optional[int] = None,
+    parent_id: Optional[int] = None,
 ) -> Category:
     """创建分类"""
     try:
@@ -31,11 +32,19 @@ def create_category(
                 detail=f"Category with name '{name}' already exists",
             )
 
+        if parent_id is not None:
+            parent = db.query(Category).filter(Category.id == parent_id).first()
+            if not parent:
+                raise ValidationError(
+                    "Parent category not found",
+                    detail=f"父分类 ID {parent_id} 不存在",
+                )
+
         if sort_order is None:
             current_max = db.query(func.max(Category.sort_order)).scalar()
             sort_order = (current_max + 1) if current_max is not None else 0
 
-        category = Category(name=name, icon=icon, color=color, sort_order=sort_order)
+        category = Category(name=name, icon=icon, color=color, sort_order=sort_order, parent_id=parent_id)
         db.add(category)
         db.commit()
         db.refresh(category)
@@ -53,6 +62,32 @@ def list_categories(db: Session) -> List[Category]:
         return db.query(Category).order_by(Category.sort_order.asc(), Category.id.asc()).all()
     except Exception as e:
         raise DatabaseError(f"Failed to list categories: {str(e)}")
+
+
+def list_categories_tree(db: Session) -> List[Category]:
+    """返回树形分类列表（仅根节点，子节点通迁 children 嵌套）"""
+    try:
+        return (
+            db.query(Category)
+            .filter(Category.parent_id.is_(None))
+            .order_by(Category.sort_order.asc(), Category.id.asc())
+            .all()
+        )
+    except Exception as e:
+        raise DatabaseError(f"Failed to list categories tree: {str(e)}")
+
+
+def get_descendant_ids(db: Session, category_id: int) -> List[int]:
+    """返回该分类及所有后代分类的 id 列表（递归遍历）"""
+    result: List[int] = [category_id]
+    queue = [category_id]
+    while queue:
+        current_ids = queue
+        children = db.query(Category.id).filter(Category.parent_id.in_(current_ids)).all()
+        child_ids = [c.id for c in children]
+        result.extend(child_ids)
+        queue = child_ids
+    return result
 
 
 def get_category(db: Session, category_id: int) -> Category:
@@ -83,8 +118,10 @@ def update_category(
     icon: Optional[str] = None,
     color: Optional[str] = None,
     sort_order: Optional[int] = None,
+    parent_id: Optional[int] = None,
+    clear_parent: bool = False,
 ) -> Category:
-    """更新分类"""
+    """更新分类，clear_parent=True 时将分类提升为根节点"""
     try:
         category = get_category(db, category_id)
 
@@ -102,6 +139,28 @@ def update_category(
             category.color = color
         if sort_order is not None:
             category.sort_order = sort_order
+        if clear_parent:
+            category.parent_id = None
+        elif parent_id is not None:
+            if parent_id == category_id:
+                raise ValidationError(
+                    "Cannot set category as its own parent",
+                    detail="分类不能将自身设为父分类",
+                )
+            # 防循环引用：新父节点不能是当前节点的后代
+            descendant_ids = get_descendant_ids(db, category_id)
+            if parent_id in descendant_ids:
+                raise ValidationError(
+                    "Circular reference detected",
+                    detail="不能将分类的后代设为其父分类（循环引用）",
+                )
+            parent = db.query(Category).filter(Category.id == parent_id).first()
+            if not parent:
+                raise ValidationError(
+                    "Parent category not found",
+                    detail=f"父分类 ID {parent_id} 不存在",
+                )
+            category.parent_id = parent_id
 
         category.updated_at = datetime.utcnow()
         db.commit()
@@ -115,9 +174,16 @@ def update_category(
 
 
 def delete_category(db: Session, category_id: int) -> bool:
-    """删除分类（仍被账单引用或最后一个时拒绝）"""
+    """删除分类（仍被账单引用、最后一个或有子分类时拒绝）"""
     try:
         category = get_category(db, category_id)
+
+        child_count = db.query(Category).filter(Category.parent_id == category_id).count()
+        if child_count > 0:
+            raise ValidationError(
+                "Cannot delete category with subcategories",
+                detail=f"分类「{category.name}」下还有子分类，请先删除或迁移子分类",
+            )
 
         ref_count = db.query(BillRecord).filter(BillRecord.category_id == category_id).count()
         if ref_count > 0:
@@ -200,7 +266,9 @@ def list_bills(
             query = query.filter(BillRecord.transaction_date <= end_date + "T23:59:59")
 
         if category_id:
-            query = query.filter(BillRecord.category_id == category_id)
+            # 按父分类筛选时，自动展开所有后代分类
+            ids = get_descendant_ids(db, category_id)
+            query = query.filter(BillRecord.category_id.in_(ids))
 
         if merchant_name:
             query = query.filter(BillRecord.merchant_name.ilike(f"%{merchant_name}%"))

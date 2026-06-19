@@ -13,6 +13,7 @@ class CategoryBrief(BaseModel):
     name: str = Field(..., description="分类名称")
     icon: str = Field(default="", description="emoji 图标")
     color: str = Field(default="#6B7280", description="十六进制颜色")
+    parent_id: Optional[int] = Field(default=None, description="父分类 ID，null 表示根分类")
 
     class Config:
         from_attributes = True
@@ -26,11 +27,30 @@ class CategoryInDB(BaseModel):
     icon: str = Field(default="", description="emoji 图标")
     color: str = Field(..., description="十六进制颜色")
     sort_order: int = Field(..., description="排序权重")
+    parent_id: Optional[int] = Field(default=None, description="父分类 ID，null 表示根分类")
     created_at: datetime = Field(..., description="创建时间")
     updated_at: datetime = Field(..., description="更新时间")
 
     class Config:
         from_attributes = True
+
+
+class CategoryTree(BaseModel):
+    """树形分类节点（含所有后代）"""
+
+    id: int = Field(..., description="分类 ID")
+    name: str = Field(..., description="分类名称")
+    icon: str = Field(default="", description="emoji 图标")
+    color: str = Field(..., description="十六进制颜色")
+    sort_order: int = Field(..., description="排序权重")
+    parent_id: Optional[int] = Field(default=None, description="父分类 ID")
+    children: List["CategoryTree"] = Field(default_factory=list, description="子分类列表")
+
+    class Config:
+        from_attributes = True
+
+
+CategoryTree.model_rebuild()
 
 
 class CreateCategoryRequest(BaseModel):
@@ -44,14 +64,16 @@ class CreateCategoryRequest(BaseModel):
         pattern=r"^#[0-9A-Fa-f]{6}$",
     )
     sort_order: Optional[int] = Field(default=None, description="排序权重，省略时取末尾", ge=0)
+    parent_id: Optional[int] = Field(default=None, description="父分类 ID，null 表示根分类")
 
     class Config:
         json_schema_extra = {
             "example": {
-                "name": "宠物",
-                "icon": "🐶",
-                "color": "#F59E0B",
-                "sort_order": 7,
+                "name": "午餐",
+                "icon": "🍱",
+                "color": "#F97316",
+                "sort_order": 1,
+                "parent_id": 1,
             }
         }
 
@@ -67,12 +89,14 @@ class UpdateCategoryRequest(BaseModel):
         pattern=r"^#[0-9A-Fa-f]{6}$",
     )
     sort_order: Optional[int] = Field(default=None, description="排序权重", ge=0)
+    parent_id: Optional[int] = Field(default=None, description="父分类 ID，传 null 可将分类提升为根节点")
 
     class Config:
         json_schema_extra = {
             "example": {
                 "name": "宠物用品",
                 "color": "#FB923C",
+                "parent_id": None,
             }
         }
 

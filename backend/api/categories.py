@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from backend.core import (
     BillResponse,
     CategoryInDB,
+    CategoryTree,
     CreateCategoryRequest,
     UpdateCategoryRequest,
 )
@@ -30,6 +31,7 @@ def create_category(
             icon=request.icon,
             color=request.color,
             sort_order=request.sort_order,
+            parent_id=request.parent_id,
         )
         return BillResponse(code=0, msg="success", data=CategoryInDB.model_validate(category))
     except Exception as e:
@@ -37,9 +39,21 @@ def create_category(
         return BillResponse(code=getattr(e, "code", 500), msg="error", data={"error": str(e)})
 
 
+@router.get("/tree", response_model=BillResponse)
+def list_categories_tree(db: Session = Depends(get_db)) -> BillResponse:
+    """查询树形分类列表（仅返回根节点，子节点嵌套在 children 中）"""
+    try:
+        roots = crud.list_categories_tree(db)
+        data: List[CategoryTree] = [CategoryTree.model_validate(r) for r in roots]
+        return BillResponse(code=0, msg="success", data=data)
+    except Exception as e:
+        logger.error(f"Error listing categories tree: {str(e)}")
+        return BillResponse(code=getattr(e, "code", 500), msg="error", data={"error": str(e)})
+
+
 @router.get("", response_model=BillResponse)
 def list_categories(db: Session = Depends(get_db)) -> BillResponse:
-    """查询全部分类"""
+    """查询全部分类（平铺列表，含 parent_id 字段）"""
     try:
         categories = crud.list_categories(db)
         data: List[CategoryInDB] = [CategoryInDB.model_validate(c) for c in categories]
@@ -66,8 +80,11 @@ def update_category(
     request: UpdateCategoryRequest,
     db: Session = Depends(get_db),
 ) -> BillResponse:
-    """更新分类"""
+    """更新分类（parent_id 传 null 可将分类提升为根节点）"""
     try:
+        # 区分「明确传 null 清空父节点」和「未传 parent_id 字段（不修改）」
+        fields = request.model_fields_set
+        clear_parent = "parent_id" in fields and request.parent_id is None
         category = crud.update_category(
             db,
             category_id,
@@ -75,6 +92,8 @@ def update_category(
             icon=request.icon,
             color=request.color,
             sort_order=request.sort_order,
+            parent_id=request.parent_id,
+            clear_parent=clear_parent,
         )
         return BillResponse(code=0, msg="success", data=CategoryInDB.model_validate(category))
     except Exception as e:
@@ -84,7 +103,7 @@ def update_category(
 
 @router.delete("/{category_id}", response_model=BillResponse)
 def delete_category(category_id: int, db: Session = Depends(get_db)) -> BillResponse:
-    """删除分类（仍被账单引用或最后一个时拒绝）"""
+    """删除分类（有子分类、账单引用或最后一个时拒绝）"""
     try:
         crud.delete_category(db, category_id)
         return BillResponse(code=0, msg="success")

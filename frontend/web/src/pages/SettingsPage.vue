@@ -14,14 +14,24 @@
         <div class="flex items-center gap-3 mb-3">
           <div class="flex items-center gap-2 flex-1">
             <label class="text-sm text-text-secondary whitespace-nowrap">起始日</label>
-            <input
-              v-model.number="cycleInputDay"
-              type="number"
-              min="1"
-              max="28"
-              class="input w-20 text-center"
-              @input="onCycleInput"
-            />
+            <div class="input-number-wrap">
+              <input
+                v-model.number="cycleInputDay"
+                type="number"
+                min="1"
+                max="28"
+                class="input w-20 text-center"
+                @input="onCycleInput"
+              />
+              <div class="input-number-controls">
+                <button type="button" tabindex="-1" @click="cycleInputDay = Math.min(28, (cycleInputDay || 0) + 1); onCycleInput()">
+                  <svg viewBox="0 0 10 6" width="10" height="6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 5L5 1L9 5"/></svg>
+                </button>
+                <button type="button" tabindex="-1" @click="cycleInputDay = Math.max(1, (cycleInputDay || 1) - 1); onCycleInput()">
+                  <svg viewBox="0 0 10 6" width="10" height="6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1L5 5L9 1"/></svg>
+                </button>
+              </div>
+            </div>
             <span class="text-sm text-text-secondary">号</span>
           </div>
           <button

@@ -74,7 +74,7 @@
             </div>
             <div class="flex-1 min-w-0">
               <h3 class="text-sm font-semibold text-text truncate">{{ bill.merchant_name }}</h3>
-              <p class="text-xs text-text-muted">{{ bill.category?.name || '其他' }}</p>
+              <p class="text-xs text-text-muted">{{ categoryPath }}</p>
             </div>
           </div>
           <p class="text-xs text-text-muted">{{ formatDate(bill.transaction_date) }}</p>
@@ -100,7 +100,7 @@
           </div>
           <div class="flex-1 min-w-0">
             <h3 class="text-sm font-semibold text-text truncate">{{ bill.merchant_name }}</h3>
-            <p class="text-xs text-text-muted">{{ bill.category?.name || '其他' }}</p>
+            <p class="text-xs text-text-muted">{{ categoryPath }}</p>
           </div>
         </div>
         <p class="text-xs text-text-muted">{{ formatDate(bill.transaction_date) }}</p>
@@ -148,12 +148,14 @@ import { format, parseISO } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useDevice } from '@/utils/useDevice'
+import { useCategoriesStore } from '@/stores/categories'
 
 // ---- 模块级共享状态：当前左滑展开的卡片 id ----
 // 所有 BillCard 实例共享，确保同一时刻最多一条展开
 const activeSwipeId = ref<number | null>(null)
 
 const { isMobile } = useDevice()
+const categoriesStore = useCategoriesStore()
 
 const props = defineProps<{
   bill: BillRecord
@@ -163,6 +165,21 @@ const emit = defineEmits<{
   edit: [bill: BillRecord]
   delete: [bill: BillRecord]
 }>()
+
+/** 构建多级分类路径，如「餐饮 / 午餐」 */
+const categoryPath = computed(() => {
+  const cat = props.bill.category
+  if (!cat) return '其他'
+  const path: string[] = [cat.name]
+  let parentId = cat.parent_id
+  while (parentId != null) {
+    const parent = categoriesStore.byId.get(parentId)
+    if (!parent) break
+    path.unshift(parent.name)
+    parentId = parent.parent_id ?? null
+  }
+  return path.join(' / ')
+})
 
 const ACTION_WIDTH = 128
 const SWIPE_THRESHOLD = 40

@@ -39,7 +39,7 @@ class User(Base):
 
 
 class Category(Base):
-    """账单分类表（全局共享，两位用户共用）"""
+    """账单分类表（全局共享，两位用户共用，支持无限层级嵌套）"""
 
     __tablename__ = "categories"
 
@@ -48,13 +48,29 @@ class Category(Base):
     icon = Column(String(16), nullable=False, default="", comment="emoji 图标")
     color = Column(String(7), nullable=False, default="#6B7280", comment="十六进制颜色 #RRGGBB")
     sort_order = Column(Integer, nullable=False, default=0, index=True, comment="排序权重，数值小的在前")
+    parent_id = Column(
+        Integer,
+        ForeignKey("categories.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+        comment="父分类 ID（null 表示根分类）",
+    )
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment="创建时间")
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False, comment="更新时间")
+
+    # 自引用关系：children 为直接子节点列表，parent 为父节点
+    children = relationship(
+        "Category",
+        back_populates="parent",
+        cascade="all",
+        order_by="Category.sort_order, Category.id",
+    )
+    parent = relationship("Category", back_populates="children", remote_side="Category.id")
 
     __table_args__ = (Index("idx_category_sort", "sort_order", "id"),)
 
     def __repr__(self):
-        return f"<Category(id={self.id}, name={self.name})>"
+        return f"<Category(id={self.id}, name={self.name}, parent_id={self.parent_id})>"
 
 
 class BillRecord(Base):

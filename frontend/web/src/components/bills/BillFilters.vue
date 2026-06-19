@@ -26,23 +26,16 @@
     <!-- 分类选择 -->
     <div class="space-y-2">
       <label class="block text-sm font-medium text-text">分类</label>
-      <p v-if="categoriesStore.isLoading && categories.length === 0" class="text-xs text-text-muted">加载中...</p>
-      <p v-else-if="categories.length === 0" class="text-xs text-text-muted">暂无分类</p>
-      <div v-else class="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-7 gap-2">
-        <button
-          v-for="cat in categories"
-          :key="cat.id"
-          @click="toggleCategory(cat.id)"
-          :class="[
-            'p-2 rounded-lg border-2 transition-all duration-200 flex flex-col items-center',
-            localFilters.category_id === cat.id
-              ? 'border-primary bg-primary/10'
-              : 'border-border bg-surface hover:border-primary/50',
-          ]"
-        >
-          <div class="text-base mb-0.5">{{ cat.icon }}</div>
-          <div class="text-xs text-text-secondary">{{ cat.name }}</div>
-        </button>
+      <p v-if="categoriesStore.isLoading && allCategories.length === 0" class="text-xs text-text-muted">加载中...</p>
+      <p v-else-if="allCategories.length === 0" class="text-xs text-text-muted">暂无分类</p>
+      <div v-else>
+        <CategoryDrillDown
+          :model-value="localFilters.category_id"
+          size="sm"
+          :show-all="true"
+          @select="onCategorySelect"
+          @clear="clearCategory"
+        />
       </div>
     </div>
 
@@ -83,6 +76,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useUiStore } from '@/stores/ui'
 import { useCategoriesStore } from '@/stores/categories'
+import CategoryDrillDown from '@/components/categories/CategoryDrillDown.vue'
 
 defineProps<{
   isModal?: boolean
@@ -96,7 +90,8 @@ const emit = defineEmits<{
 const uiStore = useUiStore()
 const categoriesStore = useCategoriesStore()
 
-const categories = computed(() => categoriesStore.sortedCategories)
+const allCategories = computed(() => categoriesStore.sortedCategories)
+
 const dateError = ref('')
 
 const localFilters = reactive({
@@ -146,8 +141,13 @@ const onStartDateChange = () => {
   applyFilters()
 }
 
-const toggleCategory = (id: number) => {
-  localFilters.category_id = localFilters.category_id === id ? undefined : id
+const clearCategory = () => {
+  localFilters.category_id = undefined
+  applyFilters()
+}
+
+const onCategorySelect = (id: number) => {
+  localFilters.category_id = id
   applyFilters()
 }
 
@@ -168,3 +168,17 @@ const handleClear = () => {
   emit('apply')
 }
 </script>
+
+<style scoped>
+.expand-sub-enter-active,
+.expand-sub-leave-active {
+  transition: max-height 0.2s ease, opacity 0.15s ease;
+  max-height: 600px;
+  overflow: hidden;
+}
+.expand-sub-enter-from,
+.expand-sub-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+</style>

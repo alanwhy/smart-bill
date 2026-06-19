@@ -245,3 +245,104 @@
 .shake {
   animation: shake 300ms ease-in-out;
 }
+
+/* ============================================================
+   全局滚动条（Element UI 风格：细条、圆角、hover 显色）
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #334155; /* border color */
+  border-radius: 3px;
+  transition: background-color 200ms ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #64748b; /* slate-500 */
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+
+/* ============================================================
+   数字输入框 spinner（上下箭头）—— Element UI 风格
+   隐藏浏览器默认丑陋 spinner，用 CSS 定制
+   ============================================================ */
+
+/* 隐藏默认 spinner */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* 包裹数字框的容器（需要在模板中给 type=number 的 input 父元素加 .input-number-wrap） */
+.input-number-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-number-wrap input[type='number'] {
+  padding-right: 2rem; /* 为按钮留空间 */
+}
+
+.input-number-wrap .input-number-controls {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 2rem;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #334155;
+  overflow: hidden;
+  border-radius: 0 12px 12px 0; /* 匹配 .input 的 rounded-lg */
+}
+
+.input-number-wrap .input-number-controls button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1E293B; /* surface */
+  color: #94A3B8;      /* text-muted */
+  border: none;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+  font-size: 10px;
+  line-height: 1;
+  padding: 0;
+}
+
+.input-number-wrap .input-number-controls button:hover {
+  background: #334155; /* border */
+  color: #F59E0B;      /* primary */
+}
+
+.input-number-wrap .input-number-controls button:active {
+  background: #F59E0B20;
+}
+
+.input-number-wrap .input-number-controls button + button {
+  border-top: 1px solid #334155;
+}
