@@ -111,14 +111,15 @@ def run_migration(engine: Engine, dry_run: bool) -> int:
             )
         )
 
-    # 4. 强制所有普通用户首次登录改密
-    actions.append(
-        (
-            "force_change_password",
-            "UPDATE users SET must_change_password = 1 WHERE role = 'user'",
-            {},
+    # 4. 仅在 must_change_password 列刚被新建时才批量标记（增量：列已存在说明已迁移过，不重置）
+    if "must_change_password" not in columns:
+        actions.append(
+            (
+                "force_change_password",
+                "UPDATE users SET must_change_password = 1 WHERE role = 'user'",
+                {},
+            )
         )
-    )
 
     if dry_run:
         print("\n--- DRY RUN: 将要执行的 SQL ---")
