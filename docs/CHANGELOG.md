@@ -2,6 +2,14 @@
 
 所有前端版本变更记录。格式遵循 [Conventional Commits](https://conventionalcommits.org/)。
 
+## [0.7.0](https://github.com/alanwhy/smart-bill/compare/v0.6.0...v0.7.0) (2026-06-19)
+
+
+### ✨ 新功能
+
+* implement category management with hierarchical structure ([17b7ba8](https://github.com/alanwhy/smart-bill/commit/17b7ba8263de7c533b135f56414a1f295b0ee1b8))
+* 添加分类层级结构支持，更新 API 和文档；新增树形分类端点及相关组件 ([e5ecf49](https://github.com/alanwhy/smart-bill/commit/e5ecf496568f5934d6ede800fa13f11d05c81428))
+
 ## [0.7.0] - 2026-06-19
 
 ### 已实现
