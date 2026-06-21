@@ -40,7 +40,7 @@ export const billApi = {
   async listBills(userId: number, params?: {
     startDate?: string
     endDate?: string
-    category_id?: number
+    category_ids?: number[]
     searchText?: string
   }): Promise<BillRecord[]> {
     const response = await client.get('/bills', {
@@ -48,8 +48,20 @@ export const billApi = {
         user_id: userId,
         start_date: params?.startDate,
         end_date: params?.endDate,
-        category_id: params?.category_id,
+        category_ids: params?.category_ids?.length ? params.category_ids : undefined,
         merchant_name: params?.searchText || undefined,
+      },
+      paramsSerializer: (p: Record<string, unknown>) => {
+        const parts: string[] = []
+        for (const [key, val] of Object.entries(p)) {
+          if (val === undefined || val === null) continue
+          if (Array.isArray(val)) {
+            val.forEach((v) => parts.push(`${key}=${encodeURIComponent(String(v))}`))
+          } else {
+            parts.push(`${key}=${encodeURIComponent(String(val))}`)
+          }
+        }
+        return parts.join('&')
       },
     })
 

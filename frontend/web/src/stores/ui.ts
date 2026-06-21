@@ -6,7 +6,7 @@ export const useUiStore = defineStore('ui', () => {
   const filters = ref<BillFilter>({
     startDate: undefined,
     endDate: undefined,
-    category_id: undefined,
+    category_ids: undefined,
     searchText: undefined,
   })
 
@@ -25,7 +25,7 @@ export const useUiStore = defineStore('ui', () => {
     filters.value = {
       startDate: undefined,
       endDate: undefined,
-      category_id: undefined,
+      category_ids: undefined,
       searchText: undefined,
     }
   }

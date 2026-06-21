@@ -88,6 +88,6 @@ export interface ApiResponse<T = any> {
 export interface BillFilter {
   startDate?: string
   endDate?: string
-  category_id?: number
+  category_ids?: number[]
   searchText?: string
 }

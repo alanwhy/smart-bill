@@ -5,7 +5,7 @@ import os
 import tempfile
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from backend.core import BatchCreateBillRequest, BillRecordInDB, BillResponse, CreateBillRequest, UpdateBillRequest
@@ -110,7 +110,7 @@ def list_bills(
     user_id: int,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    category_id: Optional[int] = None,
+    category_ids: Optional[List[int]] = Query(None),
     merchant_name: Optional[str] = None,
     db: Session = Depends(get_db),
 ) -> BillResponse:
@@ -119,7 +119,7 @@ def list_bills(
         validate_user_id(user_id)
         validate_date_range(start_date, end_date)
 
-        bills = crud.list_bills(db, user_id, start_date, end_date, category_id, merchant_name)
+        bills = crud.list_bills(db, user_id, start_date, end_date, category_ids, merchant_name)
         bill_records = [BillRecordInDB.model_validate(bill) for bill in bills]
         return BillResponse(code=0, msg="success", data=bill_records)
 

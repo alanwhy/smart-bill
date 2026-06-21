@@ -252,7 +252,7 @@ def list_bills(
     user_id: int,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    category_id: Optional[int] = None,
+    category_ids: Optional[List[int]] = None,
     merchant_name: Optional[str] = None,
 ) -> List[BillRecord]:
     """查询账单列表"""
@@ -265,10 +265,12 @@ def list_bills(
         if end_date:
             query = query.filter(BillRecord.transaction_date <= end_date + "T23:59:59")
 
-        if category_id:
-            # 按父分类筛选时，自动展开所有后代分类
-            ids = get_descendant_ids(db, category_id)
-            query = query.filter(BillRecord.category_id.in_(ids))
+        if category_ids:
+            # 按分类筛选时，自动展开每个分类的所有后代
+            all_ids: List[int] = []
+            for cid in category_ids:
+                all_ids.extend(get_descendant_ids(db, cid))
+            query = query.filter(BillRecord.category_id.in_(all_ids))
 
         if merchant_name:
             query = query.filter(BillRecord.merchant_name.ilike(f"%{merchant_name}%"))

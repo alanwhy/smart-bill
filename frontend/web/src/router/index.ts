@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import DashboardPage from "@/pages/DashboardPage.vue";
+import StatsPage from "@/pages/StatsPage.vue";
 import SettingsPage from "@/pages/SettingsPage.vue";
 import CategoriesPage from "@/pages/CategoriesPage.vue";
 import LoginPage from "@/pages/LoginPage.vue";
@@ -25,6 +26,12 @@ const routes = [
     path: "/",
     name: "Dashboard",
     component: DashboardPage,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/stats",
+    name: "Stats",
+    component: StatsPage,
     meta: { requiresAuth: true },
   },
   {

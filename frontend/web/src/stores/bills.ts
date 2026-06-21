@@ -24,7 +24,7 @@ export const useBillsStore = defineStore('bills', () => {
       const params = {
         startDate: filters?.startDate,
         endDate: filters?.endDate,
-        category_id: filters?.category_id,
+        category_ids: filters?.category_ids,
         searchText: filters?.searchText,
       }
 
@@ -79,7 +79,7 @@ export const useBillsStore = defineStore('bills', () => {
       const params = {
         startDate: filters?.startDate,
         endDate: filters?.endDate,
-        category_id: filters?.category_id,
+        category_ids: filters?.category_ids,
         searchText: filters?.searchText,
       }
 
