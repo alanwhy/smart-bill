@@ -2,6 +2,13 @@
 
 所有前端版本变更记录。格式遵循 [Conventional Commits](https://conventionalcommits.org/)。
 
+## [0.8.0](https://github.com/alanwhy/smart-bill/compare/v0.7.1...v0.8.0) (2026-06-21)
+
+
+### ✨ 新功能
+
+* add statistics page with pie, trend, and rank charts ([aac6af3](https://github.com/alanwhy/smart-bill/commit/aac6af38b7c132899dedead4e974d03bdd8891b7))
+
 ## [0.7.1](https://github.com/alanwhy/smart-bill/compare/v0.7.0...v0.7.1) (2026-06-19)
 
 
